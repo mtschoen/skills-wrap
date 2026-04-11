@@ -5,6 +5,9 @@
 
 $ErrorActionPreference = 'SilentlyContinue'
 
+# Ensure the ⚠ character renders correctly on Windows consoles (otherwise prints as `?`)
+try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
+
 $Marker = Join-Path $HOME '.claude/wrap-nudge-last-fired'
 $RateLimitSeconds = 300
 

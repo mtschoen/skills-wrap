@@ -37,7 +37,7 @@ The session-closing ritual for a Claude Code session. Performs two equally-manda
 
 ## Procedure
 
-Wrap runs four phases in sequence. Phases are independent — failure in phase N does not abort phases N+1 and does not undo phases 1..N-1.
+Wrap runs four phases in strict sequence (0 → 1 → 2 → 3) — but they are independently fault-tolerant. A failure in phase N does not undo phases 1..N-1, and (for most failures) does not abort phases N+1..last. Phase 3 (the summary) always runs, even after cancellation or failure.
 
 ### Phase 0 — Detect scope
 
@@ -67,7 +67,7 @@ Cross-cutting things not tied to any one project. Only done once per wrap, befor
 
 For each touched repo in the Phase 0 list, in order, run sub-phases 2a→2b→2c→2d. Finish one repo before starting the next.
 
-Per-repo independence rule: if any sub-phase fails partway through a repo, log the failure, skip remaining sub-phases for *that* repo (especially never push if commit failed), and continue to the next repo. Do not abort the whole wrap.
+Per-repo independence rule: if any sub-phase fails partway through a repo, record the failure in the running Phase 3 summary, skip remaining sub-phases for *that* repo (especially never push if commit failed), and continue to the next repo. Do not abort the whole wrap.
 
 **2a. Per-repo memory offload.**
 
@@ -90,7 +90,9 @@ Critical: destructive actions in 2c gate on 2a + 2b having completed successfull
 
 **2d. Commit + push decision.**
 
-**Wrap's own edits.** Everything wrap wrote during 1, 2a, 2b, 2c (memory updates, CLAUDE.md edits, archived plans, deleted scratch) auto-commits in one commit per repo with this message format:
+This sub-phase produces **two separate commits** (at most) per repo, in this order: first wrap's own edits auto-commit, then the user-work prompt runs. Never combine them — they must be distinguishable in git history.
+
+**Wrap's own edits (commit #1, automatic).** Everything wrap wrote during 1, 2a, 2b, 2c (memory updates, CLAUDE.md edits, archived plans, deleted scratch) auto-commits in one commit per repo with this message format:
 
 ```
 chore: wrap session hygiene
@@ -103,7 +105,7 @@ Wrap-Session-Id: <current session id if known, else a timestamp>
 
 The `Wrap-Session-Id:` trailer lets future tooling distinguish wrap commits from user work.
 
-**User work** (uncommitted changes that existed *before* wrap started). Show `git status` + `git log @{u}..HEAD`. Ask the user per repo:
+**User work (commit #2, prompted).** Uncommitted changes that existed *before* wrap started. After wrap's own commit lands, show `git status` + `git log @{u}..HEAD` and ask the user per repo:
 
 > `(c)ommit + push / (c)ommit only / (s)tash / (l)eave as-is / (b)ranch-off-and-commit`
 

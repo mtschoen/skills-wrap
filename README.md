@@ -6,7 +6,7 @@ See `docs/specs/2026-04-11-wrap-design.md` for the full design rationale.
 
 ## Status
 
-Under development. Tracked pressure-test results in `AUDIT.md`.
+Under development. See `AUDIT.md` for pressure-test results.
 
 ## Install
 
