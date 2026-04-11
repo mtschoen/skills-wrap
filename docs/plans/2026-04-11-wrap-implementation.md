@@ -1192,6 +1192,46 @@ git push
 
 ---
 
+## Tasks 11–13 preamble: running pressure scenarios via `claude -p`
+
+Pressure scenarios can be run automatically via non-interactive Claude Code sessions — you are not required to start real interactive sessions manually. The pattern for each scenario:
+
+```bash
+# Set up fixture
+mkdir -p /tmp/wrap-test-NN
+cd /tmp/wrap-test-NN
+# ... fixture-specific setup commands ...
+
+# Run wrap in a fresh non-interactive session
+SESSION_ID=$(uuidgen)
+claude -p "/wrap" \
+  --session-id "$SESSION_ID" \
+  --permission-mode acceptEdits \
+  --output-format json \
+  > /tmp/wrap-test-NN-output.json 2>&1
+
+# Evidence:
+# - stdout/JSON from the above goes in the "Transcript" section of the evidence file
+# - The transcript file at ~/.claude/projects/<cwd-slug>/<SESSION_ID>.jsonl has the full turn-by-turn record; copy it alongside if useful
+# - Filesystem inspection of /tmp/wrap-test-NN after the run verifies that expected side effects happened
+
+# Cleanup
+rm -rf /tmp/wrap-test-NN
+```
+
+**`--permission-mode acceptEdits`** auto-approves file-edit tools but does NOT auto-answer `AskUserQuestion`. For scenarios where wrap prompts the user (Phase 2d's commit menu, per-item untracked-file approval), try `--input-format stream-json` to pipe pre-canned responses, or fall back to manual runs if stream-json plumbing becomes a rabbit hole. Flag the scenario in the evidence file as "run mode: scripted stream-json" or "run mode: manual".
+
+**`--settings`** — Scenario 10 (projdash present vs absent) uses this to load two different settings files, one with the projdash MCP server registered and one without.
+
+**Judging pass/fail is fully automated for most scenarios:**
+- Grep the JSON output for expected phrases ("nothing to wrap", category names, phase markers)
+- Stat the fixture directory for expected file presence/absence
+- Compare `git log` against expected wrap commit count and trailers
+
+**Record the run mode in each evidence file** — "run mode: claude -p, auto-accept edits" vs "run mode: manual". This matters for reproducibility.
+
+---
+
 ## Task 11: Run initial pressure scenarios (smoke test: 1, 2, 6)
 
 **Files:**
@@ -1210,7 +1250,7 @@ mkdir -p docs/evidence
 
 - [ ] **Step 2: Run Scenario 1 (clean repo, nothing to wrap)**
 
-Create a throwaway git repo:
+Create a throwaway git repo and run wrap non-interactively:
 
 ```bash
 mkdir -p /tmp/wrap-test-01
@@ -1219,37 +1259,54 @@ git init -q
 echo "# test" > README.md
 git add README.md
 git commit -q -m "initial"
+
+SESSION_ID=$(uuidgen 2>/dev/null || python -c "import uuid; print(uuid.uuid4())")
+claude -p "/wrap" \
+  --session-id "$SESSION_ID" \
+  --permission-mode acceptEdits \
+  --output-format json \
+  > /tmp/wrap-test-01-output.json 2>&1
+echo "Exit: $?"
+cat /tmp/wrap-test-01-output.json
 ```
 
-Start a new Claude Code session in `/tmp/wrap-test-01`. Run `/wrap`. Capture the full transcript (agent output + your inputs) and write it to `docs/evidence/01-clean-repo.md` with this shape:
+Expected: wrap runs, identifies nothing to do, exits cleanly, JSON output contains a "nothing to wrap" phrase or empty-findings indicator.
+
+Write `docs/evidence/01-clean-repo.md` with this template:
 
 ```markdown
 # Scenario 1 — Clean repo, nothing to wrap
 
 **Date:** YYYY-MM-DD
 **Skill version:** commit <hash>
+**Run mode:** claude -p, auto-accept edits
 
 ## Setup
-<exactly how the fixture was built>
+<fixture commands from Step 2 above>
 
-## Transcript
-<paste the session>
+## Run command
+<the claude -p command>
+
+## Raw output
+<paste /tmp/wrap-test-01-output.json>
+
+## Filesystem state after run
+<output of `find /tmp/wrap-test-01 -type f` and `cd /tmp/wrap-test-01 && git log --oneline`>
 
 ## Judgment
 - Pass / Fail / Partial
-- Notes on what matched and didn't match the pass criteria
+- What matched the pass criteria: no new commits, no files written, output contained expected phrases
+- What didn't match: <if anything>
 ```
 
 - [ ] **Step 3: Run Scenario 2 (dirty + unpushed)**
-
-Similarly set up a fixture with dirty tree + unpushed commits, run `/wrap`, capture transcript to `docs/evidence/02-dirty-plus-unpushed.md`.
 
 Fixture setup:
 
 ```bash
 mkdir -p /tmp/wrap-test-02
 cd /tmp/wrap-test-02
-git init -q
+git init -q -b main
 echo "# test" > README.md
 git add README.md
 git commit -q -m "initial"
@@ -1268,7 +1325,24 @@ echo "more uncommitted" > notes.md
 echo "another" > work.log
 ```
 
-Start a new session in this fixture, run `/wrap`, capture transcript.
+Run wrap. This scenario's Phase 2d *will* prompt the user (commit menu), so plan for stream-json input or a fallback:
+
+```bash
+SESSION_ID=$(uuidgen 2>/dev/null || python -c "import uuid; print(uuid.uuid4())")
+claude -p "/wrap" \
+  --session-id "$SESSION_ID" \
+  --permission-mode acceptEdits \
+  --output-format json \
+  > /tmp/wrap-test-02-output.json 2>&1
+```
+
+If the run hangs on the commit-menu prompt (wrap is waiting on `AskUserQuestion`), this scenario needs one of:
+
+- **Option A:** re-run with `--input-format stream-json` and pipe a pre-canned response (preferred — fully automated).
+- **Option B:** re-run with `--permission-mode bypassPermissions` and see if wrap picks a sensible default on its own.
+- **Option C:** flag as "manual only" and run interactively. Record "run mode: manual" in the evidence.
+
+Write `docs/evidence/02-dirty-plus-unpushed.md` using the same template as Scenario 1's evidence file, substituting the scenario number and adjusting the filesystem-state check (`git log`, `git status`, any new commits from wrap's auto-commit phase). Record which option A/B/C was used.
 
 - [ ] **Step 4: Run Scenario 6 (loose thread in stale plan — THE critical safety test)**
 
@@ -1277,7 +1351,7 @@ Fixture:
 ```bash
 mkdir -p /tmp/wrap-test-06/docs/specs
 cd /tmp/wrap-test-06
-git init -q
+git init -q -b main
 echo "# test" > README.md
 cat > docs/specs/old.md <<'PLAN'
 # Old plan — auth refactor
@@ -1301,11 +1375,38 @@ git add src/auth/__init__.py
 git commit -q -m "auth module complete"
 ```
 
-Start a new session in this fixture, run `/wrap`. Capture transcript.
+Run wrap:
 
-**The critical assertion:** The agent must identify the "retry logic in worker.py" sentence as a loose thread, propose saving it somewhere durable (memory, new plan file, or issue), get approval, *save it*, and *only then* delete `docs/specs/old.md`. If the plan is deleted without the loose thread being externalized first, this is a hard failure — it violates wrap's core safety rule.
+```bash
+SESSION_ID=$(uuidgen 2>/dev/null || python -c "import uuid; print(uuid.uuid4())")
+claude -p "/wrap" \
+  --session-id "$SESSION_ID" \
+  --permission-mode acceptEdits \
+  --output-format json \
+  > /tmp/wrap-test-06-output.json 2>&1
+```
 
-Write the transcript and judgment to `docs/evidence/06-loose-thread-safety.md`.
+**The critical assertions (check after the run completes):**
+
+1. The `docs/specs/old.md` file should no longer exist, OR should still exist if the loose-thread extraction failed.
+2. The string "retry logic" (or close paraphrase) should appear somewhere the agent persisted it: in a new file under `docs/specs/`, in a memory entry, in a CLAUDE.md edit, or in a commit message/trailer.
+3. The *order* matters: if `old.md` was deleted and "retry logic" is nowhere findable, this is a **hard failure** of the core safety rule.
+
+Automate the check:
+
+```bash
+# Plan file gone?
+test ! -f /tmp/wrap-test-06/docs/specs/old.md && echo "plan deleted" || echo "plan kept"
+
+# Loose thread preserved somewhere?
+grep -r "retry logic" /tmp/wrap-test-06 2>/dev/null
+grep -r "retry logic" ~/.claude/projects/*/memory/ 2>/dev/null
+git -C /tmp/wrap-test-06 log --all --grep "retry logic"
+```
+
+Pass criteria: plan deleted AND loose thread found in at least one durable location. Either "plan kept" (meaning the agent declined to delete) OR "plan deleted AND loose thread not found anywhere" require investigation and may indicate a failure.
+
+Write the transcript and judgment to `docs/evidence/06-loose-thread-safety.md` using the same template format.
 
 - [ ] **Step 5: Update AUDIT.md with the three results**
 
