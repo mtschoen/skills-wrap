@@ -35,6 +35,8 @@ The session-closing ritual for a Claude Code session. Performs two equally-manda
 
 7. **Verify before delete.** Every finding surfaces with evidence, a recommendation, a confidence level, and the exact action on approval. The user approves batches via `AskUserQuestion`, not per-item unless explicitly described otherwise below.
 
+8. **No items, no ceremony.** Each phase only runs its `AskUserQuestion` batch when its research has surfaced actual candidates. If a phase finds nothing, skip the prompt and continue. If *all* phases find nothing — including Phase 0's scope detection landing on a fully clean state — go straight to Phase 3 with a terse "nothing to wrap" summary. **Do not invent items out of nothing just to have something to do.** That is an explicit failure mode (see scenario 1 in `docs/pressure-scenarios.md`). Empty sweeps are a pass condition, not a problem to work around. Idempotent re-runs and clean-state invocations both look the same: detect nothing, summarize nothing, exit.
+
 ## Procedure
 
 Wrap runs four phases in strict sequence (0 → 1 → 2 → 3) — but they are independently fault-tolerant. A failure in phase N does not undo phases 1..N-1, and (for most failures) does not abort phases N+1..last. Phase 3 (the summary) always runs, even after cancellation or failure.
@@ -127,6 +129,8 @@ Always runs, even on cancel or abort. Produce a short natural-language summary c
 - **Leftovers:** per-repo, what is still dirty, unpushed, or in-progress after the wrap. Naming each explicitly so the user can decide whether to come back to it.
 
 Keep the summary terse — specific numbers, specific paths, specific decisions. No filler.
+
+**Empty case:** If Phases 0–2 found nothing (clean state, idempotent re-run, or genuinely-quiet session), the entire summary is one or two lines: *"Nothing to wrap. \<repo names\> are clean, no memory items to offload."* Do not pad with bullet points for empty categories. Per principle 8, the empty path is a valid pass — emit it directly and exit.
 
 ## Failure handling
 
