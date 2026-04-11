@@ -27,6 +27,37 @@ All 12 scenarios executed via `claude -p --permission-mode acceptEdits --output-
 
 **Summary:** 5 pass / 7 partial / 0 fail. Every "partial" result is a testing-infrastructure limitation, not a skill defect — detection and classification worked in all 7 cases.
 
+## Run 2 — 2026-04-11 (dogfood)
+
+`/wrap` was invoked on its own build session — the conversation that designed, planned, implemented, deployed, and pressure-tested the skill ran the skill on itself at the end. This is real-world evidence beyond the synthetic Run 1 scenarios.
+
+**What got wrapped:**
+- `~/skills-dev/wrap/` (full wrap)
+- `~/skills-dev/project-maintenance/` (limited — not a git repo, just verified delegation edits)
+
+**Phase 0 (scope detection):** Agent recall correctly listed both touched repos. User confirmed via `AskUserQuestion` batch.
+
+**Phase 1 (cross-project memory offload):** 4 new memory entries written, all approved as a single batch:
+- `feedback_parallelize_aggressively.md` — user prefers max-parallel subagent fan-out for independent work
+- `reference_wrap_skill.md` — pointer to dev repo + GitHub + spec/plan/audit
+- `reference_parallel_worktree_pattern.md` — cherry-pick merge approach + the `git add -A` pitfall
+- `reference_claude_p_test_mode.md` — flags + limits for non-interactive skill testing
+
+`MEMORY.md` index updated to include all four.
+
+**Phase 2 (per-repo loop):**
+- *Repo: `~/skills-dev/wrap/`* — clean tree, no unpushed commits, no temp files, no scratch, no worktrees, no extra branches. Plans sweep classified the implementation plan as Completed+tracked → deleted (this very wrap commit). The design spec stayed (it's a Reference doc, not a plan). PM delegation edits verified present.
+- *Repo: `~/skills-dev/project-maintenance/`* — not a git repo, only the delegation edits to verify. Both files (`skill-draft/SKILL.md` + `skill-draft/references/checklist.md`) still contain the wrap-relationship and the moved-rows note. No action.
+
+**Phase 2d (commit decision):** Wrap's own edits this run = (1) deletion of `docs/plans/2026-04-11-wrap-implementation.md`, (2) this AUDIT.md addition. One auto-commit with `Wrap-Session-Id` trailer. No user work pending in either repo.
+
+**Notable observations from the dogfood:**
+- The "Completed + tracked → delete" rule fired exactly once and the controlling agent (Opus) initially proposed *keep as documentation* — an unjustified override of the spec rule. User pushed back, the rule was reaffirmed, plan was deleted. **This validates that the rule needs to be sharp** — even with the spec saying delete, an Opus controller had a conservative-keep instinct. Saved a feedback memory (`feedback_dont_preserve_completed_plans.md`) so the same override doesn't happen next session.
+- `AskUserQuestion` worked correctly in interactive mode (Run 1's partials were because non-interactive `--permission-mode acceptEdits` doesn't auto-approve it).
+- Phase 1 memory offload was genuinely useful — 4 new memory entries that would otherwise have been lost when the session ended.
+
+**Status:** Pass. Skill behaved as designed end-to-end in real interactive use.
+
 ## Known follow-ups
 
 - **Scenario 5 delete vs archive drift.** The runtime agent proposed deletion for a 14-month-idle plan where the spec says archive. Consider tightening `references/plan-classification.md` with explicit guardrail: "Abandoned → ALWAYS archive, even for very old plans. Only 'Completed' plans are deleted."
