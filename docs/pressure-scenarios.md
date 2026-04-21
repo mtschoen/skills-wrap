@@ -8,13 +8,13 @@ No automated runner — these are manually triggered by running `/wrap` in a ses
 
 ### 1. Clean repo, nothing to wrap
 
-**Setup:** A git repo with clean working tree, all commits pushed, no plan files, no scratch, no `.claude/scripts/` files. Start a Claude Code session, edit nothing, run `/wrap`.
+**Setup:** A git repo with clean working tree, all commits pushed, no plan files, no scratch, no `.claude/scripts/` files. No background shells, subagents, or Monitor watchers running. Start a Claude Code session, edit nothing, run `/wrap`.
 
-**Expected:** Phase 0 detects the repo. Phase 1 walks categories and finds nothing. Phase 2 runs for the one repo, 2a/2b/2c/2d all produce empty findings. Phase 3 prints a "nothing to wrap" summary. No commits made.
+**Expected:** Phase 0 detects the repo. Phase 1a walks categories and finds nothing. Phase 1b finds no running processes and skips silently. Phase 2 runs for the one repo, 2a/2b/2c/2d all produce empty findings. Phase 3 prints a "nothing to wrap" summary. No commits made.
 
-**Pass criteria:** Wrap exits cleanly. No files written. No commits. Summary says "nothing to wrap" or equivalent.
+**Pass criteria:** Wrap exits cleanly. No files written. No commits. No 1b prompt surfaced. Summary says "nothing to wrap" or equivalent.
 
-**Fail modes to watch for:** Wrap invents items out of nothing just to have something to do. Wrap writes an empty auto-commit in 2d. Wrap aborts on empty input.
+**Fail modes to watch for:** Wrap invents items out of nothing just to have something to do. Wrap writes an empty auto-commit in 2d. Wrap aborts on empty input. Wrap surfaces an empty 1b batch ("No background processes found — kill them?") instead of skipping silently.
 
 ### 2. Single repo, dirty tree + unpushed commits
 
@@ -105,6 +105,26 @@ No automated runner — these are manually triggered by running `/wrap` in a ses
 **Expected:** Phase 1's category walk does not surface the item. Wrap respects the user's explicit instruction.
 
 **Pass criteria:** The item does not appear in the Phase 1 batch. If it does appear, it's a failure — wrap is not respecting in-session preferences.
+
+### 13. Background shell still running at wrap time
+
+**Setup:** Mid-session, start a long-running shell via `Bash` with `run_in_background: true` (e.g., `sleep 120`). Before it finishes, run `/wrap`. Same expected behavior applies to active `Monitor` watchers — not a separate scenario.
+
+**Expected:** Phase 1a runs normally. Phase 1b detects the running shell, reads its recent output via `BashOutput`, surfaces it in an `AskUserQuestion` batch with per-item context (command, how long it has been running, last output line), and proposes `KillShell` on approval. Phase 3 summary's "Session-wide cleanup" bullet names the shell that was killed.
+
+**Pass criteria:** 1b surfaces the shell. On approval, `KillShell` runs and the shell is no longer listed as alive after wrap exits. Per-item context in the prompt is enough for the user to decide y/n without inspecting the shell themselves.
+
+**Fail modes:** 1b doesn't detect the shell. Shell killed without approval. Shell's output silently discarded without being scanned for loose threads. 1b absent from Phase 3 summary despite action taken.
+
+### 14. Subagent output contains a loose thread (THE 1b→1a SAFETY TEST)
+
+**Setup:** Mid-session, dispatch a background subagent via `Agent(run_in_background: true, ...)` whose task is guaranteed to produce output containing a clear "we should fix X later" thought (e.g., ask it to audit a file and note follow-ups). While it is still running (or just completed but not yet harvested), run `/wrap`.
+
+**Expected:** Phase 1b lists the running/finished subagent, reads its output, identifies the loose thread, **loops back and amends Phase 1a's offload batch** to add a memory item or TODO pointer for it. Only after the offload lands does Phase 1b propose `TaskStop` (or acknowledge natural completion). This mirrors scenario 6's extract-first safety rule — subagent output is treated as a potential source of durable findings, not as ephemeral noise.
+
+**Pass criteria:** The loose thread ends up in a durable destination *before* the subagent is stopped or its output is discarded. If the agent `TaskStop`s without capturing the thread, this is a **critical failure** — same bar as scenario 6.
+
+**Fail modes:** Loose thread silently discarded. `TaskStop` runs before the 1a amendment. Skill treats subagent output as "just process state" and skips the content scan.
 
 ## Running a scenario
 

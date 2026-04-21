@@ -58,6 +58,18 @@ All 12 scenarios executed via `claude -p --permission-mode acceptEdits --output-
 
 **Status:** Pass. Skill behaved as designed end-to-end in real interactive use.
 
+## Run 3 — 2026-04-20
+
+Three scenarios run against `f2ac74c` + WIP Phase 1b edits (session-wide sweep split into 1a memory offload + 1b background process sweep). Scenario 1 re-run to validate the updated empty-case assertion; scenarios 13 and 14 are new.
+
+| # | Scenario | Status | Evidence | Notes |
+|---|---|---|---|---|
+| 1 (v2) | Clean repo, no bg processes | **Pass** | [01b-clean-repo-phase-1b.md](docs/evidence/01b-clean-repo-phase-1b.md) | 1b fired but surfaced no prompt — empty-case line in the summary now reads "no background processes running". 4 turns, zero denials, cleaner than Run 1's scenario 1. |
+| 13 | Background shell at wrap time | **Partial** | [13-background-shell.md](docs/evidence/13-background-shell.md) | Shell id `bcfv3mevi` was enumerated by 1b (detection half validated), but `sleep 180` reported as exiting early — termination path (`KillShell`) not demonstrably exercised. Reproduce with `--output-format stream-json` to see the tool sequence; may need a different long-running command under MSYS. |
+| 14 | Subagent loose thread (1b→1a) | **Partial (interesting)** | [14-subagent-loose-thread.md](docs/evidence/14-subagent-loose-thread.md) | Skill refused to treat a prompt-injected "worker.py retry" follow-up as real, citing that worker.py doesn't exist. Dual read: *partial* for the intended feedback-loop test (not exercised), *full pass* for the unintended "don't fabricate loose threads" floor (same bar as scenario 12). Setup needs a redesign that produces an organic loose thread tied to real repo state. |
+
+**Run 3 summary:** 1 pass / 2 partial / 0 fail. No safety violations, no data loss. Detection works; the destructive half of 1b and the 1b→1a feedback loop both need scenario redesigns to be exercised end-to-end.
+
 ## Known follow-ups
 
 ### Resolved this session

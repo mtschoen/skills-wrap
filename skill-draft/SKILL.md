@@ -53,17 +53,29 @@ Determine which repos the session touched. In order of precedence:
 
 **Output of Phase 0:** An ordered list of touched-repo roots. Store it in working memory for Phases 1–3.
 
-### Phase 1 — Session-wide memory offload
+### Phase 1 — Session-wide sweep
 
-Cross-cutting things not tied to any one project. Only done once per wrap, before the per-repo loop.
+Cross-cutting things not tied to any one project. Only done once per wrap, before the per-repo loop. Two sub-phases: memory offload, then background process sweep.
 
-1. Review your conversation context (plus the on-disk transcript at `~/.claude/projects/<slug>/<session-id>.jsonl` if your context has been compacted and you need to recover earlier content).
+**1a. Memory offload.**
+
+1. Review your conversation context (plus the on-disk transcript at `~/.claude/projects/<slug>/<session-id>.jsonl` if your context has been compacted and you need to recover earlier content). Include recent output from any background shells (`BashOutput`) or running subagents — loose threads hiding in their output count.
 2. Walk the **cross-project categories** section of `references/categories.md` in order. For each category, ask yourself *"is there anything in this category from this session worth saving?"* and draft candidate items.
 3. Each draft item is a concrete: what to save, where to save it, and why.
 4. Surface the full set as a single `AskUserQuestion` batch. Let the user approve, edit, or reject the whole set.
 5. Execute the approved writes — create or update memory files, modify `MEMORY.md` index entries, etc.
 
 **Checklist-driven:** Walk every category even if you think it is empty. Quiet sessions should not silently skip memory offload.
+
+**1b. Background process sweep.**
+
+Explicitly terminate anything this session started in the background before declaring the session closed. The harness *may* reap these on process exit, but that behavior is undocumented — explicit shutdown gives predictable results and a clean summary line.
+
+1. Background Bash shells started with `run_in_background: true` — `KillShell` each one.
+2. In-flight Task/Agent subagents still running in the background — `TaskStop` if not finishing imminently.
+3. Active `Monitor` watchers — cancel each.
+
+Surface the full set as a single `AskUserQuestion` batch with per-item context (what it is, how long it has been running, last output line). If inspecting any of them surfaces a new loose thread, loop back and amend the 1a offload batch before killing. If nothing is running, skip silently — per principle 8, no ceremony.
 
 ### Phase 2 — Per-repo loop
 
@@ -125,12 +137,13 @@ Always runs, even on cancel or abort. Produce a short natural-language summary c
 
 - **Accomplishments per repo:** commits made this session, files touched, plans closed, loose threads captured.
 - **Memory offload totals:** how many entries written, to which destinations (grouped by memory type).
+- **Session-wide cleanup:** background shells killed, subagents stopped, monitors cancelled (counts + one line each). Omit the bullet entirely if 1b found nothing.
 - **Rejected or flagged:** anything the agent surfaced that the user declined, and anything explicitly flagged as needing human judgment.
 - **Leftovers:** per-repo, what is still dirty, unpushed, or in-progress after the wrap. Naming each explicitly so the user can decide whether to come back to it.
 
 Keep the summary terse — specific numbers, specific paths, specific decisions. No filler.
 
-**Empty case:** If Phases 0–2 found nothing (clean state, idempotent re-run, or genuinely-quiet session), the entire summary is one or two lines: *"Nothing to wrap. \<repo names\> are clean, no memory items to offload."* Do not pad with bullet points for empty categories. Per principle 8, the empty path is a valid pass — emit it directly and exit.
+**Empty case:** If Phases 0–2 found nothing (clean state, idempotent re-run, or genuinely-quiet session), the entire summary is one or two lines: *"Nothing to wrap. \<repo names\> are clean, no memory items to offload, no background processes running."* Do not pad with bullet points for empty categories. Per principle 8, the empty path is a valid pass — emit it directly and exit.
 
 ## Failure handling
 
