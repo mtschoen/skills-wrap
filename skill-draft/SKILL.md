@@ -165,3 +165,9 @@ Keep the summary terse — specific numbers, specific paths, specific decisions.
 - `references/hygiene-checklist.md` — Phase 2c items with research notes per check.
 - `references/finding-schema.md` — the shape of a finding and of the summary's action log (copied from `project-maintenance`, divergence OK).
 - `references/session-end-reminder.md` — spec for the decoupled `SessionEnd` nudge hook. Wrap does not read or touch the hook's marker file; it is a separate system.
+
+## Companion scripts
+
+User-facing utilities shipped alongside the skill. Not invoked during the wrap procedure itself.
+
+- `scripts/find-unwrapped.sh` (bash) and `scripts/find-unwrapped.ps1` (PowerShell) — list recent Claude Code sessions that did NOT end with `/wrap`. Useful for recovering after a crash, a culled `claude` process, or just answering *"did I leave anything dangling?"*. Defaults filter to sessions newer than the wrap-skill's first commit, ≥50 KB, excluding `wrap-test*` scratch projects. Run with `--help` (bash) or `Get-Help` (PS) for full options.
