@@ -22,7 +22,7 @@ A marker file at `~/.claude/wrap-nudge-last-fired`. If the hook fired within the
 
 Example:
 ```
-⚠ wrap-worthy state: 3 dirty files, 2 unpushed commits in ~/llamalab. Consider /wrap next session.
+⚠ wrap-worthy state: 3 dirty files, 2 unpushed commits in ~/myrepo. Consider /wrap next session.
 ```
 
 If no signals fire, the hook prints nothing. Silent is valid.

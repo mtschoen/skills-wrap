@@ -215,7 +215,7 @@ A separate, fully-decoupled nudge mechanism. Registered via `~/.claude/settings.
 **Output (example):**
 
 ```
-⚠ wrap-worthy state: 3 dirty files, 2 unpushed commits in ~/llamalab. Consider /wrap next session.
+⚠ wrap-worthy state: 3 dirty files, 2 unpushed commits in ~/myrepo. Consider /wrap next session.
 ```
 
 If no signals fire, the hook prints nothing. Silent is valid.

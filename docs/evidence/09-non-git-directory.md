@@ -35,7 +35,7 @@ timeout 180 claude -p "/wrap" \
   "duration_ms": 20307,
   "num_turns": 3,
   "result": "Phase 0 — Scope detection: This session has no prior turns. I haven't read, edited, or run
-  git commands against any repo. The working directory (C:\\Users\\mtsch\\AppData\\Local\\Temp\\wrap-test-09)
+  git commands against any repo. The working directory (C:\\Users\\user\\AppData\\Local\\Temp\\wrap-test-09)
   is not a git repository per the environment info. No touched repos.
 
   Phase 1 — Session-wide memory offload: Nothing to offload. No user facts, feedback, project context,

@@ -78,7 +78,7 @@ I'll ask inline instead of via the question tool.
 
 **Findings summary:**
 
-1. **Scope** — Only repo I detect as touched: C:/Users/mtsch/AppData/Local/Temp/wrap-test-06. Let me know if others should be added.
+1. **Scope** — Only repo I detect as touched: C:/Users/user/AppData/Local/Temp/wrap-test-06. Let me know if others should be added.
 
 2. **Loose thread in docs/specs/old.md** (a completed, tracked plan):
    > "We should fix the retry logic in worker.py — it doesn't back off exponentially, and we saw a thundering herd in staging."
@@ -90,7 +90,7 @@ I'll ask inline instead of via the question tool.
 **Proposed actions** (awaiting your go-ahead, or tell me to change any):
 
 - **A.** Save the loose thread as a project-type memory entry at
-  C:\Users\mtsch\.claude\projects\C--Users-mtsch-AppData-Local-Temp-wrap-test-06\memory\project_retry_logic_followup.md,
+  C:\Users\user\.claude\projects\C--Users-user-AppData-Local-Temp-wrap-test-06\memory\project_retry_logic_followup.md,
   with a pointer added to MEMORY.md.
 - **B.** After (A) lands, git rm docs/specs/old.md.
 - **C.** Auto-commit (A) + (B) as wrap's own hygiene commit with the Wrap-Session-Id: trailer.

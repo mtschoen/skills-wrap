@@ -72,7 +72,7 @@ Result summary:
 
 ## Wrap Summary
 
-**Scope:** C:/Users/mtsch/AppData/Local/Temp/wrap-test-02 (single repo, branch main)
+**Scope:** C:/Users/user/AppData/Local/Temp/wrap-test-02 (single repo, branch main)
 
 **Phase 1 — session-wide memory offload:** Nothing offloaded. No conversation prior to /wrap.
 

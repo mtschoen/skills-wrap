@@ -44,7 +44,7 @@ Output was 1 JSON object (single line). Key fields:
   "is_error": false,
   "num_turns": 10,
   "stop_reason": "end_turn",
-  "result": "Understood — skipping the confirmation prompt. Since this session was empty and the repo is already clean, moving directly to Phase 3.\n\n## Phase 3 — Wrap summary\n\n**Repos wrapped:** C:/Users/mtsch/AppData/Local/Temp/wrap-test-01\n\n**Accomplishments:**\n- Nothing. This session's only activity was invoking /wrap itself.\n\n**Memory offload:**\n- Phase 1 (cross-project): 0 entries\n- Phase 2a (per-repo): 0 entries\n\n**Repo state:**\n- wrap-test-01: clean. One commit (df4c805 initial). No upstream configured.\n\n**Plans sweep:** no plan files found.\n**Hygiene pass:** nothing untracked, no scratch, no stale state.\n**Commits made:** 0 (wrap auto-commit skipped — nothing to commit)\n\n**Leftovers:** none."
+  "result": "Understood — skipping the confirmation prompt. Since this session was empty and the repo is already clean, moving directly to Phase 3.\n\n## Phase 3 — Wrap summary\n\n**Repos wrapped:** C:/Users/user/AppData/Local/Temp/wrap-test-01\n\n**Accomplishments:**\n- Nothing. This session's only activity was invoking /wrap itself.\n\n**Memory offload:**\n- Phase 1 (cross-project): 0 entries\n- Phase 2a (per-repo): 0 entries\n\n**Repo state:**\n- wrap-test-01: clean. One commit (df4c805 initial). No upstream configured.\n\n**Plans sweep:** no plan files found.\n**Hygiene pass:** nothing untracked, no scratch, no stale state.\n**Commits made:** 0 (wrap auto-commit skipped — nothing to commit)\n\n**Leftovers:** none."
 }
 ```
 

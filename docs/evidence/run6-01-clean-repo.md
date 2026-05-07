@@ -29,7 +29,7 @@ timeout 300 claude -p "Invoke the /wrap skill on this directory." \
 
 ## Final summary (verbatim)
 
-> Nothing to wrap. `C:\Users\mtsch\AppData\Local\Temp\wrap-run6\s01-clean` is clean (single initial commit, no working changes), no work was done this session, no memory items to offload, no background processes running.
+> Nothing to wrap. `C:\Users\user\AppData\Local\Temp\wrap-run6\s01-clean` is clean (single initial commit, no working changes), no work was done this session, no memory items to offload, no background processes running.
 
 ## Analysis
 
