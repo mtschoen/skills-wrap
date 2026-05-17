@@ -189,6 +189,12 @@ Keep the summary terse — specific numbers, specific paths, specific decisions.
 
 **Empty case:** If Phases 0–3 found nothing (clean state, idempotent re-run, or genuinely-quiet session), the entire summary is one or two lines: *"Nothing to wrap. \<repo names\> are clean, no memory items to offload, no background processes running."* Do not pad with bullet points for empty categories. Per principle 8, the empty path is a valid pass — emit it directly and exit.
 
+**Closing sentinel (mandatory, every path).** The very last line of the Phase 4 summary — normal, empty, cancelled, or partial-failure — MUST be this exact line on its own:
+
+> That's a /wrap. Go ahead and close the session.
+
+This is a session-end marker so the user can distinguish a real `/wrap` from a wrap-ish near-end message when reviewing transcripts later. No variations, no embellishments, no emoji. Even if the wrap was cancelled or hit failures, the sentinel still appears as the final line — its job is "this was a real wrap procedure run to its end," not "everything succeeded."
+
 ## Failure handling
 
 - **Phase independence:** failure in phase N leaves phases 1..N-1 intact and continues to phase N+1. Phase 4's summary records what completed and what didn't.
