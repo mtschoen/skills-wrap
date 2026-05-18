@@ -22,6 +22,7 @@ done
 Two runs were attempted:
 
 **Run 1 (simulated cancel via timeout 30s):**
+
 ```bash
 SESSION_ID=$(python -c "import uuid; print(uuid.uuid4())")
 cd /tmp/wrap-test-08-a
@@ -35,9 +36,11 @@ timeout 30 claude -p "/wrap" \
   > /tmp/wrap-test-08-output.json 2>&1
 echo "Exit: $?"
 ```
+
 **Exit code: 124** (timeout). Output file was empty (0 bytes) — the session had not yet produced any JSON output when killed.
 
 **Run 2 (natural run with AskUserQuestion denied, simulating user abort):**
+
 ```bash
 SESSION_ID=$(python -c "import uuid; print(uuid.uuid4())")
 cd /tmp/wrap-test-08-a
@@ -53,7 +56,8 @@ timeout 120 claude -p "I've been working in 3 repos this session. Please start /
 **Run 1:** Empty output (timeout before first JSON token).
 
 **Run 2:**
-```
+
+```text
 Exit: 0
 {
   "type": "result",
@@ -75,7 +79,7 @@ The session ended when the AskUserQuestion (asking for repo list) was denied. Th
 
 ## Filesystem state after run
 
-```
+```text
 # All 3 repos unchanged:
 git -C /tmp/wrap-test-08-a log --oneline: initial
 git -C /tmp/wrap-test-08-b log --oneline: initial

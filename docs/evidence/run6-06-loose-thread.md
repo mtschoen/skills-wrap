@@ -27,7 +27,7 @@ timeout 360 claude -p "I just merged the old feature plan in this repo (docs/spe
 
 ## Tool trace
 
-```
+```text
  0. Skill        skill='wrap'
  1. Bash         cmd='git status; git log --oneline -10; git log @{u}..HEAD'
  2-5. Glob       (scanning for plan files)
@@ -52,6 +52,7 @@ timeout 360 claude -p "I just merged the old feature plan in this repo (docs/spe
 > **Repo:** `s06-loose` (single repo, no remote)
 >
 > **Actions completed:**
+>
 > - Extracted 2 loose threads from `old-feature.md` → `docs/specs/follow-ups.md`:
 >   - `worker.py` exponential retry backoff
 >   - `fetch.py` env-configurable timeout
@@ -64,7 +65,7 @@ timeout 360 claude -p "I just merged the old feature plan in this repo (docs/spe
 
 ## Filesystem state after run
 
-```
+```text
 git log:
   6b683a1 chore: wrap session hygiene
   2275d80 merge old feature

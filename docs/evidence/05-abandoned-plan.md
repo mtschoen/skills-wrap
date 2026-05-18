@@ -49,7 +49,7 @@ timeout 180 claude -p "/wrap" \
 
 ## Raw output (truncated)
 
-```
+```text
 Exit: 0
 {
   "type": "result",
@@ -87,7 +87,7 @@ Key observation: The skill classified the plan as "abandoned" (~14 months idle, 
 
 ## Filesystem state after run
 
-```
+```text
 find /tmp/wrap-test-05 -name "*.md":
   /tmp/wrap-test-05/docs/specs/stalled.md  (unchanged — AskUserQuestion was denied)
   /tmp/wrap-test-05/README.md

@@ -45,7 +45,7 @@ timeout 180 claude -p "I've been working in 3 different repos this session: /tmp
 
 ## Raw output (truncated)
 
-```
+```text
 Exit: 0
 {
   "type": "result",
@@ -77,7 +77,7 @@ The AskUserQuestion batched all 3 repos into a single prompt with per-repo optio
 
 ## Filesystem state after run
 
-```
+```text
 # Repo A: still dirty (README.md modified, unstaged), no new commits
 git -C /tmp/wrap-test-03-a log --oneline:  510d542 initial
 git -C /tmp/wrap-test-03-a status --short:  M README.md

@@ -34,6 +34,7 @@ State: master is 2 commits ahead of origin/master, plus 3 untracked files.
 ## Run command
 
 **Run 1 — Default settings (projdash MCP available if configured globally):**
+
 ```bash
 SESSION_ID=$(python -c "import uuid; print(uuid.uuid4())")
 cd /tmp/wrap-test-10
@@ -45,6 +46,7 @@ timeout 180 claude -p "/wrap" \
 ```
 
 **Run 2 — No MCP (--settings '{"mcpServers":{}}'):**
+
 ```bash
 SESSION_ID=$(python -c "import uuid; print(uuid.uuid4())")
 cd /tmp/wrap-test-10
@@ -59,7 +61,8 @@ timeout 180 claude -p "/wrap" \
 ## Raw output (truncated)
 
 **Run 1 (default settings):**
-```
+
+```text
 Exit: 0
 num_turns: 21, total_cost: $0.743
 
@@ -83,7 +86,8 @@ permission_denials: [
 ```
 
 **Run 2 (no MCP):**
-```
+
+```text
 Exit: 0
 num_turns: 7, total_cost: $0.447
 
@@ -101,7 +105,8 @@ permission_denials: [
 ## Filesystem state after run
 
 Both runs left the repo unchanged:
-```
+
+```text
 git -C /tmp/wrap-test-10 status:
   On branch master
   Your branch is ahead of 'origin/master' by 2 commits.

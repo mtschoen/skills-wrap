@@ -29,7 +29,8 @@ echo "another" > work.log
 ```
 
 Pre-run git log:
-```
+
+```text
 e8e7cce change 2
 1b21027 change 1
 ca369a8 initial
@@ -59,7 +60,7 @@ Exit: 0 (second attempt with 180s timeout)
 
 Key fields from JSON output:
 
-```
+```text
 is_error: false
 num_turns: 18
 stop_reason: end_turn
@@ -67,7 +68,8 @@ permission_denials: 3
 ```
 
 Result summary:
-```
+
+```text
 "The question batch was declined. I'll not take destructive action without approval. Producing the Phase 3 summary based on what I observed.
 
 ## Wrap Summary
@@ -93,6 +95,7 @@ All three look like scratch test fixtures. Per-item approval required to delete,
 ```
 
 Permission denials:
+
 1. Bash: `git -C .../wrap-test-02 status && git log @{u}..HEAD` (checking repo state)
 2. Bash: `git -C .../wrap-test-02 status` (retry)
 3. AskUserQuestion: Scope confirmation + per-file action menus for notes.md, scratch.txt, work.log
@@ -100,7 +103,8 @@ Permission denials:
 ## Filesystem state after run
 
 Files in /tmp/wrap-test-02 (excluding .git):
-```
+
+```text
 /tmp/wrap-test-02/notes.md
 /tmp/wrap-test-02/README.md
 /tmp/wrap-test-02/scratch.txt
@@ -108,7 +112,8 @@ Files in /tmp/wrap-test-02 (excluding .git):
 ```
 
 Git log:
-```
+
+```text
 e8e7cce change 2
 1b21027 change 1
 ca369a8 initial

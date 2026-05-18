@@ -44,7 +44,7 @@ timeout 180 claude -p "/wrap" \
 
 ## Raw output (truncated)
 
-```
+```text
 Exit: 0
 {
   "type": "result",
@@ -87,7 +87,7 @@ Exit: 0
 
 ## Filesystem state after run
 
-```
+```text
 git -C /tmp/wrap-test-07 status:
   On branch master
   You have unmerged paths.

@@ -42,7 +42,7 @@ Exit: 0. Duration: 87398 ms wall. Turns: 12. Cost: $0.61.
 
 ## Tool trace (extracted from stream-json)
 
-```
+```text
 0. Bash         cmd='python -c "import time; time.sleep(600)"' run_in_background=True
 1. ToolSearch   select:BashOutput  (BashOutput not in top-level tool set — had to load)
 2. ToolSearch   bash output background shell
@@ -74,7 +74,7 @@ Exit: 0. Duration: 87398 ms wall. Turns: 12. Cost: $0.61.
 
 ## Filesystem state after run
 
-```
+```text
 e00d61b initial          (git log)
 README.md                 (only file)
 (clean working tree)
@@ -85,6 +85,7 @@ README.md                 (only file)
 **Status: Pass.** End-to-end exercise of Phase 1b's detection + termination paths.
 
 **What passed (verified via tool trace, not just narrative):**
+
 - Phase 1b enumerated the background shell (event 3: `TaskOutput` on its task_id).
 - Phase 1b surfaced an `AskUserQuestion` batch with per-item context (event 11: command, age, output state).
 - **`TaskStop` fired on event 13** — the termination path is demonstrably exercised. Under `bypassPermissions`, the first option ("Kill it") was auto-selected, which matched the skill's recommendation.

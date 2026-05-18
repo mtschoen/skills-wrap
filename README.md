@@ -4,7 +4,7 @@ A Claude Code skill that runs the session-closing ritual: externalizes ephemeral
 
 See `docs/specs/2026-04-11-wrap-design.md` for the full design rationale.
 
-**Repo:** https://github.com/mtschoen/wrap
+**Repo:** <https://github.com/mtschoen/wrap>
 
 ## Status
 

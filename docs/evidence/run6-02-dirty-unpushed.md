@@ -22,7 +22,7 @@ timeout 360 claude -p "I have uncommitted staged changes and unpushed commits in
 
 ## Tool trace
 
-```
+```text
 0. Skill        skill='wrap'
 1. Bash         cmd='git status'
 2. Bash         cmd='git log --oneline -10'
@@ -51,7 +51,7 @@ timeout 360 claude -p "I have uncommitted staged changes and unpushed commits in
 
 ## Filesystem state after run
 
-```
+```text
 git log --oneline    →    8788b87 unpushed commit 2
                           c3e8307 unpushed commit 1
                           97f871e initial commit

@@ -22,7 +22,7 @@ timeout 300 claude -p "Add a JSDoc-style docstring to the parseInput function in
 
 ## Tool trace
 
-```
+```text
 0. Skill        skill='pushback'   ← NOTE: agent invoked the pushback skill on the kvetch
 1. Bash         cmd='ls src/legacy_module.js 2>&1; pwd'
 2. Read         file='.../src/legacy_module.js'

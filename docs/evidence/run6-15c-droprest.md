@@ -22,7 +22,7 @@ timeout 360 claude -p "I want you to do three things: (1) email field in src/for
 
 ## Tool trace
 
-```
+```text
 0. Bash         cmd='ls src/forms/'
 1. Read         file='.../src/forms/UserForm.tsx'
 2. Edit         file='.../src/forms/UserForm.tsx'   ← task 1
@@ -41,9 +41,11 @@ timeout 360 claude -p "I want you to do three things: (1) email field in src/for
 > ## Phase 4 — Session summary
 >
 > **Accomplishments**
+>
 > - `s15c-droprest`: Task 1 completed — added `<input type="email" name="email">` to `src/forms/UserForm.tsx:6` and removed the now-stale "name only" comment on line 2.
 >
 > **Dropped tasks** (per user instruction — not externalized to plan or memory):
+>
 > - Task 2: test for `validateEmail` in `src/utils/__tests__/validateEmail.test.ts`
 > - Task 3: note in `README.md`
 >
@@ -52,11 +54,12 @@ timeout 360 claude -p "I want you to do three things: (1) email field in src/for
 > **Session-wide cleanup:** Nothing running.
 >
 > **Leftovers:**
+>
 > - `s15c-droprest`: `src/forms/UserForm.tsx` is modified and uncommitted (commit prompt was dismissed). No upstream configured on `main`, so push wouldn't be available regardless.
 
 ## Filesystem state after run
 
-```
+```text
 git log --oneline    →    4626262 initial    (no wrap commit)
 git status --short   →     M src/forms/UserForm.tsx   (task 1 edit, uncommitted)
 ls                   →    README.md, src/, .git/   (no plan file, no handoff file, no memory writes)

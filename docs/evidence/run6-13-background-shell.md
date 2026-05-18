@@ -22,7 +22,7 @@ timeout 360 claude -p "Start a provably long-running background shell using the 
 
 ## Tool trace
 
-```
+```text
 0. Bash         cmd='python -c "import time; time.sleep(600)"'  run_in_background=true
 1. ToolSearch   q='select:TaskOutput'
 2. TaskOutput   id='bf36xv4va'    → confirms alive

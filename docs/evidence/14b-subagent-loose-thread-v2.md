@@ -50,7 +50,7 @@ Exit: 0. Duration: 57989 ms wall. Turns: 5. Cost: $0.65.
 
 ## Tool trace (extracted from stream-json)
 
-```
+```text
 0. Agent        subagent_type=general-purpose, run_in_background=True, desc='Analyze fetcher timeout handling'
 1. Skill        wrap
 2. TEXT         "I'll run the wrap procedure. Phase 0 first — detect scope. I haven't edited any files this session. The only active work is the background subagent I just dispatched..."
@@ -73,7 +73,7 @@ Exit: 0. Duration: 57989 ms wall. Turns: 5. Cost: $0.65.
 
 ## Filesystem state after run
 
-```
+```text
 167fca6 initial          (git log)
 src/fetcher.py           (only file)
 (clean working tree)
@@ -98,6 +98,7 @@ This is the failure mode scenario 14 is designed to catch. The agent *explicitly
 **What a clean-pass Run 5 would look like** (not yet performed):
 
 After the fixes, wrap should:
+
 - Call `TaskOutput` on the subagent's task_id, read the analysis it produced.
 - Identify the architectural opinions as candidate loose threads (they're observations about the code that aren't themselves in the code).
 - Propose offloading via `AskUserQuestion` — to a plan file, memory entry, or issue.

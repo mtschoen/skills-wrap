@@ -45,7 +45,7 @@ timeout 180 claude -p "/wrap" \
 
 ## Raw output (truncated)
 
-```
+```text
 Exit: 0
 {
   "type": "result",
@@ -78,12 +78,13 @@ Exit: 0
 ```
 
 Key behavior: The skill correctly distinguished between:
+
 - `build-once.ps1`: "# Temporary build script" header → flagged for deletion
 - `keep-me.ps1`: "# KEEP: reusable helper for X" → explicitly left alone, no finding surfaced
 
 ## Filesystem state after run
 
-```
+```text
 ls /tmp/wrap-test-11/.claude/scripts/:
   build-once.ps1  (unchanged — AskUserQuestion was denied)
   keep-me.ps1     (unchanged — explicitly kept, no finding)

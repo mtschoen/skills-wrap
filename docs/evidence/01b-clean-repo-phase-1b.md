@@ -40,7 +40,7 @@ Exit: 0. Duration: 27843 ms wall / 20679 ms API. Turns: 4. Permission denials: 0
 
 ## Filesystem state after run
 
-```
+```text
 17e0b16 initial          (git log)
 README.md                 (only file)
 (clean working tree)

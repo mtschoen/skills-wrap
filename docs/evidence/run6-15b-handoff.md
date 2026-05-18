@@ -24,7 +24,7 @@ timeout 360 claude -p "I want you to do three things: (1) add an email field to 
 
 ## Tool trace
 
-```
+```text
 0. Bash         cmd='ls .../s15a-finishfirst'
 1. Glob
 2. Read         file='.../src/forms/UserForm.tsx'

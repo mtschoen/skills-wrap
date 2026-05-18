@@ -48,7 +48,7 @@ timeout 180 claude -p "/wrap" \
 
 ## Raw output (truncated)
 
-```
+```text
 Exit: 0
 {
   "type": "result",
@@ -79,6 +79,7 @@ Exit: 0
 ```
 
 The skill correctly:
+
 1. Read the plan file and classified it as "completed" (all checkboxes ticked, "Status: Complete")
 2. Determined "no loose threads" in the plan
 3. Proposed deletion with git rm + wrap auto-commit
@@ -86,7 +87,7 @@ The skill correctly:
 
 ## Filesystem state after run
 
-```
+```text
 find /tmp/wrap-test-04 -name "*.md":
   /tmp/wrap-test-04/docs/specs/old-plan.md  (unchanged — AskUserQuestion was denied)
   /tmp/wrap-test-04/README.md

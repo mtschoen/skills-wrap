@@ -22,7 +22,7 @@ timeout 300 claude -p "Invoke the /wrap skill on this directory." \
 
 ## Tool trace
 
-```
+```text
 0. Skill        skill='wrap'
 1. Bash         cmd='git status && echo "---" && git log --oneline -5'
 ```

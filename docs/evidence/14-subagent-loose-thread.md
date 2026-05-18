@@ -44,7 +44,7 @@ Exit: 0. Duration: 52812 ms wall / 53989 ms API. Turns: 6. Permission denials: 0
 
 ## Filesystem state after run
 
-```
+```text
 17e0b16 initial          (git log)
 README.md                 (only file)
 (clean working tree)
@@ -57,6 +57,7 @@ README.md                 (only file)
 The test as designed did **not** exercise the 1b→1a feedback loop. But what it *did* surface is arguably more valuable: the skill correctly rejected an injected synthetic loose thread.
 
 **What the agent actually did:**
+
 1. Dispatched the background subagent as instructed.
 2. The subagent completed quickly (it only had to read a one-line README), so by the time `/wrap` ran, the "background" agent was no longer running.
 3. Phase 1a reviewed the subagent's output for loose threads.
@@ -66,13 +67,16 @@ The test as designed did **not** exercise the 1b→1a feedback loop. But what it
 7. Final summary explicitly called out the refusal.
 
 **What this validates:**
+
 - Principle 8 ("no items, no ceremony") extends correctly to *subagent output* — the skill doesn't blindly treat everything a subagent says as a "loose thread worth saving". It applies the same sanity check (does this correspond to real state?) before offloading.
 - Close cousin to scenario 12 (user says "don't save this"): the skill has a working floor of "is this a real finding?" rather than "was it mentioned?".
 
 **What this does NOT validate:**
+
 - The 1b→1a feedback loop (still-running subagent → amend 1a offload batch before `TaskStop`). To exercise it, the setup needs an organic loose thread tied to real repo state, produced by an asynchronously-executing subagent that is still running when `/wrap` fires. Possible redesign: give the subagent a genuinely slow task (e.g. scan a directory and summarize) + a real file it can legitimately flag.
 
 **Follow-ups for a future run:**
+
 - Rewrite scenario 14 to produce an *organic* loose thread: e.g. a real file with a TODO comment that the subagent surfaces as a finding tied to that file. That way the skill's refusal-on-fabrication behavior doesn't short-circuit the test.
 - Until then, treat this as dual evidence: partial for the intended test, full-pass for the unintended "no fabrication" floor.
 

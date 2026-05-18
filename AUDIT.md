@@ -32,12 +32,14 @@ All 12 scenarios executed via `claude -p --permission-mode acceptEdits --output-
 `/wrap` was invoked on its own build session — the conversation that designed, planned, implemented, deployed, and pressure-tested the skill ran the skill on itself at the end. This is real-world evidence beyond the synthetic Run 1 scenarios.
 
 **What got wrapped:**
+
 - `~/skills-dev/wrap/` (full wrap)
 - `~/skills-dev/project-maintenance/` (limited — not a git repo, just verified delegation edits)
 
 **Phase 0 (scope detection):** Agent recall correctly listed both touched repos. User confirmed via `AskUserQuestion` batch.
 
 **Phase 1 (cross-project memory offload):** 4 new memory entries written, all approved as a single batch:
+
 - `feedback_parallelize_aggressively.md` — user prefers max-parallel subagent fan-out for independent work
 - `reference_wrap_skill.md` — pointer to dev repo + GitHub + spec/plan/audit
 - `reference_parallel_worktree_pattern.md` — cherry-pick merge approach + the `git add -A` pitfall
@@ -46,12 +48,14 @@ All 12 scenarios executed via `claude -p --permission-mode acceptEdits --output-
 `MEMORY.md` index updated to include all four.
 
 **Phase 2 (per-repo loop):**
+
 - *Repo: `~/skills-dev/wrap/`* — clean tree, no unpushed commits, no temp files, no scratch, no worktrees, no extra branches. Plans sweep classified the implementation plan as Completed+tracked → deleted (this very wrap commit). The design spec stayed (it's a Reference doc, not a plan). PM delegation edits verified present.
 - *Repo: `~/skills-dev/project-maintenance/`* — not a git repo, only the delegation edits to verify. Both files (`skill-draft/SKILL.md` + `skill-draft/references/checklist.md`) still contain the wrap-relationship and the moved-rows note. No action.
 
 **Phase 2d (commit decision):** Wrap's own edits this run = (1) deletion of `docs/plans/2026-04-11-wrap-implementation.md`, (2) this AUDIT.md addition. One auto-commit with `Wrap-Session-Id` trailer. No user work pending in either repo.
 
 **Notable observations from the dogfood:**
+
 - The "Completed + tracked → delete" rule fired exactly once and the controlling agent (Opus) initially proposed *keep as documentation* — an unjustified override of the spec rule. User pushed back, the rule was reaffirmed, plan was deleted. **This validates that the rule needs to be sharp** — even with the spec saying delete, an Opus controller had a conservative-keep instinct. Saved a feedback memory (`feedback_dont_preserve_completed_plans.md`) so the same override doesn't happen next session.
 - `AskUserQuestion` worked correctly in interactive mode (Run 1's partials were because non-interactive `--permission-mode acceptEdits` doesn't auto-approve it).
 - Phase 1 memory offload was genuinely useful — 4 new memory entries that would otherwise have been lost when the session ended.
@@ -198,11 +202,10 @@ Phase 0 was added as an Outstanding-asks check (fork: finish-first / wrap-with-h
 
 #### 1. Package wrap as an installable Claude Code plugin
 
-#### 1. Package wrap as an installable Claude Code plugin
-
 **What:** Right now `mtschoen/wrap` is a public github repo, but it's not structured as a `/plugin install`-able plugin. To make it installable via the Claude Code plugin system:
 
 - Add a `.claude-plugin/plugin.json` manifest at the wrap repo root:
+
   ```json
   {
     "name": "wrap",
@@ -211,6 +214,7 @@ Phase 0 was added as an Outstanding-asks check (fork: finish-first / wrap-with-h
     "skills": ["skill-draft"]
   }
   ```
+
   (Field names speculative — verify against an existing plugin's manifest, e.g. `~/.claude/plugins/marketplaces/claude-plugins-official/plugins/commit-commands/.claude-plugin/plugin.json`.)
 - Decide whether `skill-draft/` or a renamed `skills/wrap/` directory is the canonical location for the deployed skill inside the plugin layout. The current `skill-draft/` name is dev-flavored and may need renaming for plugin packaging.
 - Update README with install instructions: `claude plugin install github.com/mtschoen/wrap` (or whatever the actual command is).
@@ -243,6 +247,7 @@ Phase 0 was added as an Outstanding-asks check (fork: finish-first / wrap-with-h
 
 - Verify projdash supports MCP server mode: `cd ~/projdash && projdash mcp --help` (per `~/projdash/CLAUDE.md`, the `projdash mcp` command starts an MCP server on stdio transport).
 - Add projdash to `~/.claude/settings.json` mcpServers:
+
   ```json
   "mcpServers": {
     "projdash": {
@@ -251,6 +256,7 @@ Phase 0 was added as an Outstanding-asks check (fork: finish-first / wrap-with-h
     }
   }
   ```
+
 - Confirm the projdash MCP tools appear in `/mcp` list in a fresh session.
 - Re-run scenario 10 (projdash present vs absent) — once with projdash registered, once with it removed (`--settings '{"mcpServers":{}}'`). Compare outputs to verify they're equivalent at the user-visible layer (the whole point of tool-agnostic prose).
 - Update AUDIT.md scenario 10 row from Partial to Pass if the comparison succeeds.

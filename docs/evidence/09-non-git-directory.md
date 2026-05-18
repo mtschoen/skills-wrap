@@ -59,7 +59,7 @@ timeout 180 claude -p "/wrap" \
 
 ## Filesystem state after run
 
-```
+```text
 ls /tmp/wrap-test-09/:
   data.txt
   notes.txt

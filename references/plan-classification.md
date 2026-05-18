@@ -76,6 +76,7 @@ Two failure modes are likely to bite an agent following the rules above. Both ha
 **No.** A plan file that captures how a feature was built is not the same as documentation that describes the feature. Documentation lives in dedicated docs (READMEs, CLAUDE.md, code comments, `docs/*.md`). Plans live in plan files. After implementation, the plan is either redundant (if work followed it) or wrong (if work diverged) — either way, delete it. Git history preserves the plan for any future archaeology.
 
 **This applies even when:**
+
 - The plan is well-written
 - The plan documents architectural decisions
 - The plan captures learnings from the build

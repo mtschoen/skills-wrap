@@ -151,6 +151,7 @@ The task is deliberate: the subagent's *analysis* (opinions, recommendations, ar
 **Expected:** Phase 0 walks back through the conversation and recognizes tasks 2 and 3 as unfinished asks the user would be surprised to see dropped. Phase 0 surfaces them in a single `AskUserQuestion` batch with the three-option fork: **Finish first** / **Wrap with handoff** / **Wrap, drop the rest**. No Phase 1+ work happens until the fork is resolved.
 
 **Pass criteria (any one branch validates the fork mechanism, but each path has its own assertions):**
+
 - *Finish first:* Wrap exits immediately. No commits made. No memory written. The agent returns control with the unfinished tasks still in conversation context (so the user can pick up where they left off).
 - *Wrap with handoff:* Phase 0 closes, then Phases 1–4 run normally. The unfinished tasks appear as a Phase 3a memory entry or plan file (e.g. `PLAN.md` with the two outstanding asks). The Phase 4 summary names the handoff destination.
 - *Wrap, drop the rest:* Phase 0 closes, then Phases 1–4 run normally. The dropped tasks are NOT externalized but ARE listed in the Phase 4 summary's leftovers/rejected section so there's a record of what didn't make it.

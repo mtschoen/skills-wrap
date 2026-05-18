@@ -67,7 +67,7 @@ The compound prompt includes: (1) a discovery ("memory usage spiked during load 
 
 ## Filesystem state after run
 
-```
+```text
 ls /tmp/wrap-test-12/:
   README.md  (unchanged)
 

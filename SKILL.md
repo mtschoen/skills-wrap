@@ -147,7 +147,7 @@ This sub-phase produces **two separate commits** (at most) per repo, in this ord
 
 **Wrap's own edits (commit #1, automatic).** Everything wrap wrote during 2, 3a, 3b, 3c (memory updates, CLAUDE.md edits, archived plans, deleted scratch) auto-commits in one commit per repo with this message format:
 
-```
+```text
 chore: wrap session hygiene
 
 - <one bullet per category of change, e.g. "Archived 2 completed plans">

@@ -22,7 +22,7 @@ timeout 360 claude -p "Add three things to this repo: (1) email field in src/for
 
 ## Tool trace
 
-```
+```text
 0. Bash         cmd='ls .../s15a-finishfirst'
 1. Glob
 2. Read         file='.../src/forms/UserForm.tsx'
@@ -37,10 +37,12 @@ timeout 360 claude -p "Add three things to this repo: (1) email field in src/for
 > **Wrap — Phase 0: Outstanding-asks check**
 >
 > Recalling unfinished items from this session:
+>
 > - Task 2: test for `validateEmail` in `src/utils/__tests__/validateEmail.test.ts` — not started
 > - Task 3: note in `README.md` — not started
 >
 > You pre-selected **Finish first** when you invoked wrap, so per your instructions I'm exiting immediately at Phase 0:
+>
 > - No scope detect, no sweep
 > - No commits (task 1's edit to `src/forms/UserForm.tsx` stays uncommitted)
 > - No memory writes
@@ -50,7 +52,7 @@ timeout 360 claude -p "Add three things to this repo: (1) email field in src/for
 
 ## Filesystem state after run
 
-```
+```text
 git log --oneline    →    b66c0c2 initial    (no wrap commit)
 git status --short   →     M src/forms/UserForm.tsx   (task 1 edit, uncommitted)
 ls                   →    README.md, src/, .git/   (no HANDOFF.md, no plan files)

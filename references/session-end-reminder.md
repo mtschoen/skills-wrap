@@ -21,7 +21,8 @@ A marker file at `~/.claude/wrap-nudge-last-fired`. If the hook fired within the
 ## Output format
 
 Example:
-```
+
+```text
 ⚠ wrap-worthy state: 3 dirty files, 2 unpushed commits in ~/myrepo. Consider /wrap next session.
 ```
 

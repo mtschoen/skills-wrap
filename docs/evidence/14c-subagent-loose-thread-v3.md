@@ -19,7 +19,7 @@ Exit: 0. Duration: 95735 ms wall. Turns: 7. Cost: $0.90.
 
 ## Tool trace (extracted from stream-json)
 
-```
+```text
 0. Agent          subagent_type=general-purpose, run_in_background=True, desc='Analyze fetcher timeout handling'
 1. Skill          wrap
 2. TEXT           "Starting wrap. First, I need to load the tools for handling the

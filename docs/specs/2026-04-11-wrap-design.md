@@ -117,12 +117,14 @@ For each touched repo in the Phase 0 list, in sequence:
 **2b. Plans/specs sweep.**
 
 Look in all the usual spots:
+
 - `docs/superpowers/specs/*.md` (brainstorming skill output)
 - `PLAN.md` / `TODO.md` at repo root
 - `.plans/` if present
 - In-conversation drafts the model can recall
 
 Classify each plan:
+
 - **Completed** — referenced work is merged/pushed, checklist ticked
 - **Superseded** — newer plan covers the same ground
 - **Abandoned** — no progress for weeks, user has moved on
@@ -132,6 +134,7 @@ Classify each plan:
 **Critical rule — extract loose threads first.** Before *any* plan file is deleted or archived, the agent scans it for "we should fix X later" / "Y might come up again" / unresolved questions, and externalizes those to the appropriate destination (memory, GitHub issue, CLAUDE.md note, new smaller plan file). Only *after* that extraction is complete and approved does the source plan get removed.
 
 Actions after extraction:
+
 - **Completed + tracked in git** → delete outright (git history preserves)
 - **Completed + untracked** → ask with bias-to-delete
 - **Superseded** → delete, rationale in commit
@@ -155,7 +158,7 @@ Each finding carries: **what / evidence / recommendation / confidence / action_o
 
 Wrap's own edits from Phases 1–2c (memory updates, CLAUDE.md edits, archived plans, deleted scratch) are auto-committed with a standard message:
 
-```
+```text
 chore: wrap session hygiene
 
 - <summary of what wrap did in this repo>
@@ -193,6 +196,7 @@ Phase 3 always runs, even on abort or cancellation — it's the audit trail.
 **User cancel mid-run.** Whatever has been approved + executed stays done. Wrap prints a "cancelled — completed: X, pending: Z" summary. Already-made auto-commits stay.
 
 **Git operations that fail.**
+
 - Merge conflict on wrap's auto-commit → stash wrap's edits, report, leave user work as-is.
 - Push rejected (non-fast-forward) → never force-push. Report "push rejected, commits stay local", move on.
 - Upstream missing → treat as "commit only, no push" for that repo.
@@ -206,6 +210,7 @@ Phase 3 always runs, even on abort or cancellation — it's the audit trail.
 A separate, fully-decoupled nudge mechanism. Registered via `~/.claude/settings.json` as a `SessionEnd` hook. Runs at session exit, prints at most one line, exits 0. Never interactive, never blocks exit, never invokes wrap.
 
 **What it checks** (on the session's final `cwd`, since we don't track touched repos to disk):
+
 1. Working tree dirty? (`git status --porcelain` non-empty)
 2. Unpushed commits? (`git log @{u}..HEAD` non-empty, if upstream exists)
 3. Any files present in `.claude/scripts/`? (Per the user's CLAUDE.md rule, one-offs should be deleted after use, so presence at exit is itself a signal — no age check needed.)
@@ -214,7 +219,7 @@ A separate, fully-decoupled nudge mechanism. Registered via `~/.claude/settings.
 
 **Output (example):**
 
-```
+```text
 ⚠ wrap-worthy state: 3 dirty files, 2 unpushed commits in ~/myrepo. Consider /wrap next session.
 ```
 
@@ -226,7 +231,7 @@ If no signals fire, the hook prints nothing. Silent is valid.
 
 ## Repo layout
 
-```
+```text
 ~/skills-dev/wrap/
 ├── README.md                          # overview, install pointer, status
 ├── AUDIT.md                           # pressure-test findings (grows over time)

@@ -53,12 +53,14 @@ Output was 1 JSON object (single line). Key fields:
 ## Filesystem state after run
 
 Files in /tmp/wrap-test-01 (excluding .git):
-```
+
+```text
 /tmp/wrap-test-01/README.md
 ```
 
 Git log:
-```
+
+```text
 df4c805 initial
 ```
 
