@@ -278,6 +278,11 @@ Phase 0 was added as an Outstanding-asks check (fork: finish-first / wrap-with-h
 
 ### Open
 
+#### 8. Run 7 testing follow-ups (junk-files audit)
+
+- **Test prompts may still be too leading.** The headless prompts for sc 17/18/19 (e.g. "I opened the Unity Editor and ran npm install") name the *activity* but may still over-cue the agent into surfacing the junk-files finding. Flagged by the user 2026-05-26; deferred deliberately — revisit only if real-world wraps misbehave (over- or under-firing the check), rather than over-tuning fixtures speculatively now.
+- **Run 7 harness is throwaway / in `/tmp`.** The runner that produced Run 7/7b/7c lives at `/tmp/wrap-audit-run7/run.sh` (per-scenario fixtures + raw stream-json beside it). It is in `/tmp` and will NOT survive a reboot. Promote it to `wrap/tests/` if a durable, re-runnable harness is wanted — this is the concrete deliverable the #2 "test infrastructure v2" item below has been circling.
+
 #### 7. Multi-repo Phase 0 fork — future scenario candidate (Run 6 deferral)
 
 **What:** Run 6 didn't exercise Phase 0's fork in a multi-repo session. The skill's "single AskUserQuestion batch" instruction implies one whole-session decision regardless of repo count, but no test verifies this. Worth a scenario when test infrastructure for multi-repo fixtures is in place.
