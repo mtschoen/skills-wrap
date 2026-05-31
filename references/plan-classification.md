@@ -42,7 +42,7 @@ Any sentence or bullet in the plan that expresses:
 ### Where loose threads go
 
 - Unresolved questions + future intentions that are user-preference-shaped → memory (feedback or reference type)
-- Warnings or pitfalls tied to a specific file/function → inline code comment OR `CLAUDE.md` note
+- Warnings or pitfalls tied to a specific file/function → inline code comment OR `AGENTS.md`/`CLAUDE.md` note
 - Alternatives considered → commit message trailer on the deletion commit, so git history preserves them
 - Cross-references to other work → a new smaller plan file OR GitHub issue, never left dangling
 
@@ -51,7 +51,7 @@ Any sentence or bullet in the plan that expresses:
 1. Read the plan file in full.
 2. Emit candidate loose threads as a list, with proposed destinations.
 3. Get user approval on the whole list (batch).
-4. Execute the externalization (write the memory, edit CLAUDE.md, open the issue, etc.).
+4. Execute the externalization (write the memory, edit AGENTS.md or CLAUDE.md, open the issue, etc.).
 5. **Only now** delete or archive the source plan.
 
 If the loose-thread extraction is rejected or fails, the source plan stays. Skipping step 3 or 4 is a bug.
@@ -73,7 +73,7 @@ Two failure modes are likely to bite an agent following the rules above. Both ha
 
 ### Mistake 1: "this completed plan is documentation-grade — let's keep it"
 
-**No.** A plan file that captures how a feature was built is not the same as documentation that describes the feature. Documentation lives in dedicated docs (READMEs, CLAUDE.md, code comments, `docs/*.md`). Plans live in plan files. After implementation, the plan is either redundant (if work followed it) or wrong (if work diverged) — either way, delete it. Git history preserves the plan for any future archaeology.
+**No.** A plan file that captures how a feature was built is not the same as documentation that describes the feature. Documentation lives in dedicated docs (READMEs, AGENTS.md, CLAUDE.md, code comments, `docs/*.md`). Plans live in plan files. After implementation, the plan is either redundant (if work followed it) or wrong (if work diverged) — either way, delete it. Git history preserves the plan for any future archaeology.
 
 **This applies even when:**
 
@@ -82,7 +82,7 @@ Two failure modes are likely to bite an agent following the rules above. Both ha
 - The plan captures learnings from the build
 - "Future maintainers might want to understand how we got here"
 
-If those things are valuable, **move the valuable content to its proper home first**, then delete the plan. A README section, a CLAUDE.md note, or an ADR file is the right destination. The plan file is not.
+If those things are valuable, **move the valuable content to its proper home first**, then delete the plan. A README section, an `AGENTS.md` (or `CLAUDE.md`) note, or an ADR file is the right destination. The plan file is not.
 
 The "Completed + tracked → delete outright" rule in the table above is correct as written. Trust it. Do not propose alternative actions like "keep as documentation" or "archive instead" for completed plans — those are unjustified conservative-instinct overrides.
 

@@ -71,14 +71,14 @@ The current session's TodoWrite list contains items that should persist.
 
 Deploy targets, build times, known quirks, environment constraints specific to this project.
 
-- **Destination:** project memory or `CLAUDE.md`.
+- **Destination:** project memory or `AGENTS.md` (or `CLAUDE.md`).
 - **Example:** "builds take ~12 minutes on CI, run `pytest -x` locally for fast iteration".
 
 ### Gotchas / pitfalls hit
 
 Things that went wrong during the session that future agents should avoid.
 
-- **Destination:** `CLAUDE.md` note or code comment at the site.
+- **Destination:** `AGENTS.md` (or `CLAUDE.md`) note or code comment at the site.
 - **Example:** "tests fail silently if `ASYNC_MODE=1` is not set; check env before debugging".
 
 ### Work-in-progress code

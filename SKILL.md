@@ -5,7 +5,7 @@ description: Use when the user says /wrap, "wrap up", "close out this session", 
 
 # wrap
 
-The session-closing ritual for a Claude Code session. Performs two equally-mandatory jobs: **externalize ephemeral working memory** (things the current agent knows from this conversation that no file/commit captures yet) into durable artifacts, and **bring every touched repo into a clean state** so the next session's agent doesn't waste cycles wading through obsolete context.
+The session-closing ritual for a coding agent session. Performs two equally-mandatory jobs: **externalize ephemeral working memory** (things the current agent knows from this conversation that no file/commit captures yet) into durable artifacts, and **bring every touched repo into a clean state** so the next session's agent doesn't waste cycles wading through obsolete context.
 
 ## When to use
 
@@ -109,7 +109,7 @@ When taking the inline path, the orchestrator MUST still load the relevant refer
 
 **3a. Per-repo memory offload (orchestrator, all repos sequentially).**
 
-For each repo in the Phase 1 list, walk the **per-project categories** section of `references/categories.md` and draft candidate items in the orchestrator's main context — project learnings, decisions, CLAUDE.md updates, gotchas. This step has no verbose tool output: it is recall-driven drafting against the conversation context already loaded. Subagent isolation buys nothing here, and the nuance cost of fanning it out outweighs the savings.
+For each repo in the Phase 1 list, walk the **per-project categories** section of `references/categories.md` and draft candidate items in the orchestrator's main context — project learnings, decisions, AGENTS.md/CLAUDE.md updates, gotchas. This step has no verbose tool output: it is recall-driven drafting against the conversation context already loaded. Subagent isolation buys nothing here, and the nuance cost of fanning it out outweighs the savings.
 
 The 3a drafts are not yet executed or shown to the user. Hold them in working memory; they are combined with 3b/3c findings before the AskUserQuestion batch in the per-repo review step below. The drafts are also passed into each subagent's brief as cross-reference material so subagents don't duplicate them.
 
@@ -147,13 +147,13 @@ Critical: destructive actions in 3c gate on 3a + 3b having completed successfull
 
 This sub-phase produces **two separate commits** (at most) per repo, in this order: first wrap's own edits auto-commit, then the user-work prompt runs. Never combine them — they must be distinguishable in git history.
 
-**Wrap's own edits (commit #1, automatic).** Everything wrap wrote during 2, 3a, 3b, 3c (memory updates, CLAUDE.md edits, archived plans, deleted scratch) auto-commits in one commit per repo with this message format:
+**Wrap's own edits (commit #1, automatic).** Everything wrap wrote during 2, 3a, 3b, 3c (memory updates, AGENTS.md/CLAUDE.md edits, archived plans, deleted scratch) auto-commits in one commit per repo with this message format:
 
 ```text
 chore: wrap session hygiene
 
 - <one bullet per category of change, e.g. "Archived 2 completed plans">
-- <e.g. "Updated CLAUDE.md with 3 new project facts">
+- <e.g. "Updated AGENTS.md/CLAUDE.md with 3 new project facts">
 
 Wrap-Session-Id: <current session id if known, else a timestamp>
 ```
