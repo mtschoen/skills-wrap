@@ -12,7 +12,10 @@
 #   --no-exit    show sessions missing /exit (crashed, killed, or abandoned)
 #
 # Default filters (suppress noise so the list reflects real WIP):
-#   --since      2026-04-11   (first wrap-skill commit; older sessions can't have wrapped)
+#   --since      2026-04-30   (earliest observed real /wrap invocation; the skill
+#                              existed since 2026-04-11 but routine adoption lagged
+#                              by ~3 weeks. Older default flagged the adoption-gap
+#                              window as "unwrapped" — false alarms.)
 #   --min-bytes  50000        (skip short Q&A sessions)
 #   wrap-test*   excluded     (scratch test projects, not real work)
 #
@@ -37,7 +40,7 @@ wrap_marker_pattern='"(skill|attributionSkill)":"wrap"|<command-name>/wrap</comm
 
 projects_dir="${CLAUDE_PROJECTS_DIR:-$HOME/.claude/projects}"
 limit=50
-since='2026-04-11'
+since='2026-04-30'
 min_bytes=50000
 exclude_pattern='wrap-test'
 show_all=0
