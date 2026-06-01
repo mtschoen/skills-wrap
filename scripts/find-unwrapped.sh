@@ -24,6 +24,7 @@
 #   find-unwrapped.sh --no-exit             # sessions that didn't exit cleanly
 #   find-unwrapped.sh --limit 100           # scan more sessions
 #   find-unwrapped.sh --since 2026-04-20    # narrower recency window
+#   find-unwrapped.sh --no-since            # disable date cutoff entirely
 #   find-unwrapped.sh --min-bytes 0         # include short sessions
 #   find-unwrapped.sh --all                 # bypass all filters; show matched too (✓)
 #   find-unwrapped.sh --raw                 # tab-separated, no filters applied
@@ -51,13 +52,14 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --limit)     limit="$2"; shift 2 ;;
         --since)     since="$2"; shift 2 ;;
+        --no-since)  since=''; shift ;;
         --min-bytes) min_bytes="$2"; shift 2 ;;
         --exclude)   exclude_pattern="$2"; shift 2 ;;
         --no-exit)   mode='no-exit'; shift ;;
         --all)       show_all=1; shift ;;
         --raw)       raw=1; shift ;;
         -h|--help)
-            sed -n '2,27p' "$0" | sed 's/^# \{0,1\}//'
+            sed -n '2,33p' "$0" | sed 's/^# \{0,1\}//'
             exit 0
             ;;
         *) echo "unknown argument: $1" >&2; exit 2 ;;
@@ -79,10 +81,15 @@ format_mtime() {
     fi
 }
 
-# Epoch seconds for the --since cutoff, for cross-platform date math
-since_epoch=$(date -d "$since" +%s 2>/dev/null \
-    || date -j -f '%Y-%m-%d' "$since" +%s 2>/dev/null \
-    || { echo "could not parse --since '$since'" >&2; exit 2; })
+# Epoch seconds for the --since cutoff, for cross-platform date math.
+# Empty `since` means --no-since: skip the date filter entirely.
+if [[ -n "$since" ]]; then
+    since_epoch=$(date -d "$since" +%s 2>/dev/null \
+        || date -j -f '%Y-%m-%d' "$since" +%s 2>/dev/null \
+        || { echo "could not parse --since '$since'" >&2; exit 2; })
+else
+    since_epoch=0
+fi
 
 mtime_epoch() {
     local f="$1"
@@ -127,9 +134,12 @@ if [[ $raw -eq 0 ]]; then
     fi
     if [[ $show_all -eq 1 ]]; then
         printf 'All recent sessions (top %d, ✓ = %s, no filters):\n\n' "$limit" "$marker_label"
-    else
+    elif [[ -n "$since" ]]; then
         printf '%s sessions  (since %s, ≥%s bytes, top %d scanned):\n\n' \
             "$label" "$since" "$min_bytes" "$limit"
+    else
+        printf '%s sessions  (no date cutoff, ≥%s bytes, top %d scanned):\n\n' \
+            "$label" "$min_bytes" "$limit"
     fi
 fi
 
