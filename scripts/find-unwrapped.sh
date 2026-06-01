@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 # find-unwrapped.sh — List recent Claude Code sessions that did NOT end with /wrap.
 #
-# Heuristic: grep each session JSONL for a Skill invocation or attributionSkill
-# field referencing wrap. Sessions with either marker are considered wrapped;
-# anything else is potentially WIP.
+# Heuristic: grep each session JSONL for any of:
+#   - "skill":"wrap" / "attributionSkill":"wrap"  (Skill-tool invocation)
+#   - <command-name>/wrap</command-name>          (slash-command invocation)
+#   - "Launching skill: wrap"                     (skill engagement marker)
+# Sessions with any marker are considered wrapped; anything else is potentially WIP.
 #
 # Modes:
 #   (default)    show sessions missing /wrap
@@ -27,6 +29,11 @@
 #   claude --resume <session-id>
 
 set -euo pipefail
+
+# Combined regex matching any signal that the wrap skill was engaged in a session.
+# Slash-command (`<command-name>/wrap</command-name>`) is the most common path and
+# is missed by the older `"skill":"wrap"`-only heuristic.
+wrap_marker_pattern='"(skill|attributionSkill)":"wrap"|<command-name>/wrap</command-name>|Launching skill: wrap'
 
 projects_dir="${CLAUDE_PROJECTS_DIR:-$HOME/.claude/projects}"
 limit=50
@@ -79,18 +86,28 @@ mtime_epoch() {
     stat -c '%Y' "$f" 2>/dev/null || stat -f '%m' "$f"
 }
 
-# Collect session IDs of actively running claude processes
-declare -A active_sessions
+# Collect session IDs of actively running claude processes.
+# Stored as a space-delimited string (with leading/trailing spaces) so we can
+# membership-test via `case "$active_sessions" in *" $sid "*) ...` — works
+# under bash 3.2 (macOS default), which has no associative arrays.
+# `awk` extracts the --resume argument portably across GNU/BSD; `grep -oP` is
+# GNU-only and silently fails on macOS.
+active_sessions=' '
 now_epoch=$(date +%s)
 while IFS= read -r sid; do
-    [[ -n "$sid" ]] && active_sessions["$sid"]=1
-done < <(pgrep -a claude 2>/dev/null | grep -oP '(?<=--resume )\S+')
+    [[ -n "$sid" ]] && active_sessions="${active_sessions}${sid} "
+done < <(pgrep -a claude 2>/dev/null \
+    | awk '{for (i = 1; i < NF; i++) if ($i == "--resume") print $(i + 1)}')
 # Current (non-resumed) session: find the most recently modified JSONL
 # whose mtime is within the last 120s — that's almost certainly active
 active_grace=120
 
-# Scan most recent N session files
-mapfile -t files < <(ls -t "$projects_dir"/*/*.jsonl 2>/dev/null | head -n "$limit")
+# Scan most recent N session files. `mapfile` is bash 4+, so we use a
+# while-read loop into an array for bash 3.2 compatibility.
+files=()
+while IFS= read -r line; do
+    files+=("$line")
+done < <(ls -t "$projects_dir"/*/*.jsonl 2>/dev/null | head -n "$limit")
 
 if [[ ${#files[@]} -eq 0 ]]; then
     echo "no session files found under $projects_dir" >&2
@@ -129,12 +146,12 @@ for f in "${files[@]}"; do
 
     if [[ $mode == 'no-exit' ]]; then
         # Active sessions (by --resume cmdline or recent mtime) aren't crashed
-        if [[ -n "${active_sessions[$session]+x}" ]]; then
+        if [[ "$active_sessions" == *" $session "* ]]; then
             matched=1
         elif (( now_epoch - file_epoch < active_grace )); then
             matched=1
         # Wrapped sessions count as clean exit
-        elif grep -qE '"(skill|attributionSkill)":"wrap"' "$f"; then
+        elif grep -qE "$wrap_marker_pattern" "$f"; then
             matched=1
         elif tail -n 5 "$f" | grep -qF '"content":"<command-name>/exit</command-name>'; then
             matched=1
@@ -142,7 +159,7 @@ for f in "${files[@]}"; do
             matched=0
         fi
     else
-        if grep -qE '"(skill|attributionSkill)":"wrap"' "$f"; then
+        if grep -qE "$wrap_marker_pattern" "$f"; then
             matched=1
         else
             matched=0
