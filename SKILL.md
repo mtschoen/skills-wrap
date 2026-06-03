@@ -9,7 +9,7 @@ The session-closing ritual for a coding agent session. Performs two equally-mand
 
 ## When to use
 
-- User types `/wrap` or says some variant of "wrap up this session", "close out", "let's finish for the day".
+- User types `/wrap` or says some variant of "wrap up this session", "close out", "let's finish for the day". `/wrap --fast` runs the same procedure non-interactively (no questions, safe actions only) — see "Fast mode" below.
 - User explicitly asks you to update memory / save learnings / commit everything before exit.
 - `project-maintenance` is running and its procedure tells you to run wrap as step 0.
 
@@ -38,6 +38,34 @@ The session-closing ritual for a coding agent session. Performs two equally-mand
 8. **No items, no ceremony.** Each phase only runs its `AskUserQuestion` batch when its research has surfaced actual candidates. If a phase finds nothing, skip the prompt and continue. If *all* phases find nothing — including Phase 1's scope detection landing on a fully clean state — go straight to Phase 4 with a terse "nothing to wrap" summary. **Do not invent items out of nothing just to have something to do.** That is an explicit failure mode (see scenario 1 in `docs/pressure-scenarios.md`). Empty sweeps are a pass condition, not a problem to work around. Idempotent re-runs and clean-state invocations both look the same: detect nothing, summarize nothing, exit.
 
 9. **Orchestrator retains override authority.** Parts of Phase 3 fan out to per-repo sonnet subagents to keep verbose tool output (file reads, status walls, plan-file contents) out of main context. The orchestrator (this conversation) is still in charge: it may at any time read repo contents directly, bypass a subagent's draft, or pull per-repo work back into main context if subagent output feels thin, suspicious, or incomplete. Subagents are an optimization, not a delegation contract. The judgment-heavy work — deciding what's worth saving, reviewing drafts, assembling user-approval batches, writing the final summary — stays with the orchestrator.
+
+## Fast mode (`--fast`)
+
+`/wrap --fast` runs the **same five phases in the same sequence**, but non-interactively: it skips every `AskUserQuestion` gate and performs **only safe, additive actions** automatically. Use it to externalize and tidy a session without sitting through approval batches when you don't plan to revisit this session.
+
+**Two hard invariants:**
+
+- **No questions.** Every `AskUserQuestion` batch in Phases 0–3 is skipped; each takes its fast-mode default from the table below. Fast mode never blocks on the user.
+- **Safe actions only.** Fast mode **writes** (memory files, AGENTS.md/CLAUDE.md edits, wrap's own hygiene commit) but never **destroys or moves** data: no file deletes, no archiving/moving plan files, no stashing, and no committing or pushing the user's pre-existing work. Every destructive or user-facing action is recorded in the Phase 4 summary as *deferred*, not performed.
+
+**Over-share, don't curate.** Because nobody is coming back to this session, lower the bar for what gets saved. When unsure whether a memory item is worth keeping, keep it. Fast mode deliberately trades a fatter memory footprint for zero lost context.
+
+**Don't deliberate.** With no destructive action to gate and no approval batch to assemble, the careful per-finding review (principle 9) collapses: extract loose threads, write them, move on. Take subagent findings at face value for the memory writes — there is nothing to delete that a wrong call would punish.
+
+| Phase | Interactive default | Fast-mode action |
+|-------|--------------------|------------------|
+| 0 — outstanding asks | ask finish / handoff / drop | **handoff**: externalize every unfinished ask to a memory entry or handoff plan; never exit early, never silently drop |
+| 1 — scope | confirm repo list | use the detected list (recall + dirty-scan) as-is |
+| 2a — session memory | approve batch | write every drafted item automatically |
+| 2b — background processes | approve batch | harvest each one's output into memory first, then terminate |
+| 3a — per-repo memory | (folded into Phase 3 batch) | write every drafted item automatically |
+| 3b — plans sweep | approve archive / delete | extract loose threads to memory; **leave every plan file in place**; list would-be archives in the summary |
+| 3c — hygiene | approve deletes / junk clear | extract loose threads to memory; **delete nothing** (junk default is keep anyway); list findings in the summary |
+| 3d — wrap's own commit (#1) | automatic | unchanged: auto-commit wrap's own writes per repo (still no push) |
+| 3d — user work (#2) | prompt p/c/s/l/b | **leave as-is**: never auto-commit or push pre-existing user changes; report them as leftovers |
+| 4 — summary | always runs | always runs; state that `--fast` ran and enumerate every deferred destructive action plus the untouched user work |
+
+A `--fast` run that finishes normally emits the **completed** closing sentinel; one the user interrupts emits the interrupted sentinel. Everything else in the Procedure below still applies — fast mode only changes how gates resolve, not the phase order or the failure-handling rules.
 
 ## Procedure
 
