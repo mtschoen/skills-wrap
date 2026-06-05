@@ -143,7 +143,7 @@ The 3a drafts are not yet executed or shown to the user. Hold them in working me
 
 **3b + 3c. Plans sweep + hygiene pass (per-repo subagents).**
 
-After 3a is complete for all touched repos, dispatch per-repo subagents (model: sonnet) to do 3b and 3c work in their own contexts. Each subagent reads `references/plan-classification.md` and `references/hygiene-checklist.md` on demand — those references are not loaded into the orchestrator's context.
+After 3a is complete for all touched repos, dispatch per-repo subagents (model: sonnet) to do 3b and 3c work in their own contexts. Each subagent reads `references/plan-classification.md` and `references/hygiene-checklist.md` on demand — those references are not loaded into the orchestrator's context. The hygiene pass now includes a docs-drift check: for any repo with code changes this session, it reads the relevant doc surfaces and flags stale statements (see `references/hygiene-checklist.md` and the docs-update skill for the per-surface procedure).
 
 **Bucketing.** Cap at 4 subagents to avoid first-turn cache-miss overhead. The most-edited repo (where the bulk of the session's work happened) gets its own subagent. Remaining repos are bucketed by weight; a subagent assigned multiple light repos still wins on cost because it does the verbose tool work in its own context, just sequentially across its assigned repos.
 
