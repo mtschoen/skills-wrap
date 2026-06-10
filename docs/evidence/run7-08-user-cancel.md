@@ -20,8 +20,8 @@ The fixture was also simplified to one repo (not three), so the "cancel during r
 0. Bash  cmd='git status && ---LOG--- && git log --oneline -5 && ---UPSTREAM--- && git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>&1 && ...'
          → returned: exit code 128 (chain aborted at upstream check, which fatal'd with "no upstream")
 1. Bash  cmd='echo "---XTXT---"; cat x.txt; echo "---WC---"; wc -c x.txt; echo "---REMOTE---"; git remote -v'
-2. Read  file='/home/schoen/.claude/skills/wrap/references/hygiene-checklist.md'
-3. Read  file='/home/schoen/.claude/skills/wrap/references/plan-classification.md'
+2. Read  file='~/.claude/skills/wrap/references/hygiene-checklist.md'
+3. Read  file='~/.claude/skills/wrap/references/plan-classification.md'
 4. Bash  cmd='echo "---ALL FILES---"; ls -la; echo "---TRACKED---"; git ls-files; echo "---PORCELAIN---"; git status --porcelain'
 5. AskUserQuestion  (3-option: Leave as-is / Delete it / Commit it — declined under bypass)
 ```

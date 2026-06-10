@@ -19,9 +19,9 @@ The "projdash present" path (using `projdash.find_dirty` etc.) would require a s
 ```text
 0. Bash   cmd='echo "=== status ===" && git status && ...' (status + upstream + unpushed + remotes + branches)
 1. Bash   cmd='echo "=== a.txt diff ===" && git diff a.txt && ...' (diff + dirty file contents + plan dirs check)
-2. Read   file='/home/schoen/.claude/skills/wrap/references/hygiene-checklist.md'
-3. Read   file='/home/schoen/.claude/skills/wrap/references/plan-classification.md'
-4. Read   file='/home/schoen/.claude/skills/wrap/references/categories.md'
+2. Read   file='~/.claude/skills/wrap/references/hygiene-checklist.md'
+3. Read   file='~/.claude/skills/wrap/references/plan-classification.md'
+4. Read   file='~/.claude/skills/wrap/references/categories.md'
 5. AskUserQuestion  (5-option commit menu — declined under bypass)
 ```
 

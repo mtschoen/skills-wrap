@@ -14,7 +14,7 @@ One-shot conformance check of the new non-interactive `--fast` mode (does the mo
 | Only wrap's own hygiene commit lands | Pass | Pass |
 | Over-share: loose thread + unfinished ask externalized | Pass (in-repo handoff) | Pass (handoff + project memory) |
 | Completed sentinel emitted | Pass | Pass |
-| No real-memory (`~/.claude/notes`) pollution | Pass | Pass |
+| No pollution of the user's real memory directories | Pass | Pass |
 
 **Result: 2/2 models pass.** Both produced explicit *Deferred* (would-be plan archive + scratch delete, not performed) and *Leftovers* (pre-existing user work, never auto-committed) sections. Model difference, both compliant: opus kept the handoff in-repo; sonnet over-shared further with an extra per-project memory entry (the intended direction for fast mode). Fixtures and scratch transcripts cleaned up post-run.
 

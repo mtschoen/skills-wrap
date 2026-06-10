@@ -65,4 +65,4 @@ Wrap's hygiene checklist is a *subset* of PM's former checklist. Do not duplicat
 
 ## Tooling
 
-Follow tool-agnostic guidance: describe *what* to check in prose. The agent picks the best available implementation — projdash MCP tools if present (e.g. functions that front-load dirty detection and stale-memory scanning), raw git/grep/find otherwise.
+Follow tool-agnostic guidance: describe *what* to check in prose. The agent picks the best available implementation — project-tracker MCP tools if present (e.g. functions that front-load dirty detection and stale-memory scanning), raw git/grep/find otherwise.
