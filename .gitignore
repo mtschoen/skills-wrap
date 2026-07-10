@@ -9,3 +9,7 @@ __pycache__/
 # OS
 .DS_Store
 Thumbs.db
+
+# aislop tool state (session artifacts); keep only the shared settings file
+.aislop/*
+!.aislop/settings.json
