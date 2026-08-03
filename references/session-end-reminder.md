@@ -1,6 +1,6 @@
 # SessionEnd Reminder Hook
 
-A decoupled nudge mechanism, separate from the wrap skill itself. Registered as a `SessionEnd` hook - see "Registering the hook" below for the manual-install vs. plugin-install shapes - runs at session exit, prints at most one line, exits 0.
+A decoupled nudge mechanism, separate from the wrap skill itself. Registered as a `SessionEnd` hook (see "Registering the hook" below for the manual-install vs. plugin-install shapes). Runs at session exit, prints at most one line, exits 0.
 
 ## What it does
 
