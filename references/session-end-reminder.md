@@ -84,7 +84,7 @@ Use the `update-config` skill to perform the registration rather than hand-editi
 
 Don't paste the manual-install snippet into a plugin's `hooks.json` (a literal `~/.claude/skills/wrap/...` path breaks the moment the plugin version bumps) or the plugin snippet into a hand-edited `settings.json` (`${CLAUDE_PLUGIN_ROOT}` has no meaning there).
 
-Note the manifest is the **plugin author's** responsibility, not the installing user's: `hooks/hooks.json` lives at the plugin root and Claude Code auto-loads it when the plugin is enabled — a skill directory inside a plugin cannot self-register its hooks. If a plugin bundles this skill without shipping that manifest, the hook simply never fires until the user wires it manually via the manual-install path above.
+Note the manifest is the **plugin author's** responsibility, not the installing user's: `hooks/hooks.json` lives at the plugin root and Claude Code auto-loads it when the plugin is enabled - a skill directory inside a plugin cannot self-register its hooks. If a plugin bundles this skill without shipping that manifest, the hook simply never fires until the user wires it manually via the manual-install path above.
 
 ## What the hook must NOT do
 
