@@ -9,7 +9,11 @@
 #
 # Modes:
 #   (default)    show sessions missing /wrap
-#   --no-exit    show sessions missing /exit (crashed, killed, or abandoned)
+#   --no-exit    show sessions with no clean-exit signal (crashed, killed, or
+#                abandoned). Heuristic: a session matching the /wrap marker
+#                above also counts as a clean exit, even with no literal
+#                /exit - so a session that ran /wrap and kept going afterward
+#                will NOT show up here, even if it is still active.
 #
 # Default filters (suppress noise so the list reflects real WIP):
 #   --since      2026-04-30   (earliest observed real /wrap invocation; the skill
@@ -59,7 +63,7 @@ while [[ $# -gt 0 ]]; do
         --all)       show_all=1; shift ;;
         --raw)       raw=1; shift ;;
         -h|--help)
-            sed -n '2,33p' "$0" | sed 's/^# \{0,1\}//'
+            sed -n '2,37p' "$0" | sed 's/^# \{0,1\}//'
             exit 0
             ;;
         *) echo "unknown argument: $1" >&2; exit 2 ;;

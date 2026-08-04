@@ -11,7 +11,11 @@
 
     Modes:
       (default)  show sessions missing /wrap
-      -NoExit    show sessions missing /exit (crashed, killed, or abandoned)
+      -NoExit    show sessions with no clean-exit signal (crashed, killed, or
+                 abandoned). Heuristic: a session matching the /wrap marker
+                 above also counts as a clean exit, even with no literal
+                 /exit - so a session that ran /wrap and kept going afterward
+                 will NOT show up here, even if it is still active.
 
     Default filters (suppress noise so the list reflects real WIP):
       -Since      2026-04-30   (earliest observed real /wrap invocation; the skill
