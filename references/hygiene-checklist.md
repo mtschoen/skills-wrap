@@ -61,7 +61,7 @@ This carve-out applies to the **Stale worktrees** check as well: a keep-warm wor
 
 ## Relationship to PM
 
-Wrap's hygiene checklist is a *subset* of PM's former checklist. Do not duplicate items that have been explicitly moved to PM's rare-tier audit. If a user runs PM, PM runs wrap first, then does its own rare-tier checks on top. The two checklists must not overlap.
+Wrap's hygiene checklist is a *subset* of PM's former checklist. Do not duplicate items that have been explicitly moved to PM's rare-tier audit. PM does not invoke wrap: PM's own step 0 re-runs the read-only detection side of this checklist itself, findings-only, against the single repo it is auditing, and feeds any hits into its own propose/approve flow. Wrap remains the sole owner of the interactive, autonomous-fix, whole-session version of these checks. The two checklists must not overlap in content, even though PM's step 0 and this file cover the same item list from different angles.
 
 ## Tooling
 

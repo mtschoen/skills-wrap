@@ -11,7 +11,6 @@ The session-closing ritual for a coding agent session. Performs two equally-mand
 
 - User types `/wrap` or says some variant of "wrap up this session", "close out", "let's finish for the day". `/wrap --fast` runs the same procedure non-interactively (no questions, safe actions only) - see "Fast mode" below.
 - User explicitly asks you to update memory / save learnings / commit everything before exit.
-- `project-maintenance` is running and its procedure tells you to run wrap as step 0.
 
 ## When NOT to use
 
