@@ -252,6 +252,6 @@ The two sentinels are distinct on purpose: the "go ahead and close" line is the 
 
 ## Companion scripts
 
-User-facing utilities shipped alongside the skill. Not invoked during the wrap procedure itself.
+User-facing, Claude Code-specific diagnostic utilities shipped alongside the skill. Not invoked during the wrap procedure itself.
 
 - `scripts/find-unwrapped.sh` (bash) and `scripts/find-unwrapped.ps1` (PowerShell) - list recent Claude Code sessions that did NOT end with `/wrap`. Useful for recovering after a crash, a culled `claude` process, or just answering *"did I leave anything dangling?"*. Defaults filter to sessions since 2026-04-30 (the earliest observed real `/wrap` invocation - routine adoption lagged the skill's 2026-04-11 first commit by a few weeks), ≥50 KB, excluding `wrap-test*` scratch projects. Override the date cutoff with `--since`/`--no-since` (bash) or `-Since`/`-NoSince` (PS). Run with `--help` (bash) or `Get-Help` (PS) for full options.

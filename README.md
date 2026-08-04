@@ -14,9 +14,9 @@ This skill is part of the completion suite: `maintaining-full-coverage`, `smoke-
 
 ## Install
 
-1. Copy the repo contents (`SKILL.md`, `references/`, `hooks/`) to `~/.claude/skills/wrap/`.
-2. Register the `SessionEnd` hook in `~/.claude/settings.json` — use the `update-config` skill, pointing it at `hooks/session-end-reminder.sh` (Unix/macOS) or `hooks/session-end-reminder.ps1` (Windows).
-3. (Optional) The `scripts/find-unwrapped.sh` / `.ps1` companions are standalone diagnostics, not required for `/wrap` itself - copy `scripts/` too if you want them, or just run them from a checkout of this repo.
+1. Copy the repo contents (`SKILL.md`, `references/`, `hooks/`) to `~/.agents/skills/wrap/` (or wherever your agent harness reads skills - e.g. `~/.claude/skills/` for Claude Code).
+2. Register the `SessionEnd` hook in `~/.claude/settings.json` — use the `update-config` skill, pointing it at `hooks/session-end-reminder.sh` (Unix/macOS) or `hooks/session-end-reminder.ps1` (Windows). This step is Claude Code-specific: `SessionEnd` hooks and `settings.json` registration only exist in that harness.
+3. (Optional) The `scripts/find-unwrapped.sh` / `.ps1` companions are Claude Code-specific diagnostics (they scan Claude Code session transcripts under `~/.claude/projects`) and are not required for `/wrap` itself - copy `scripts/` too if you want them, or just run them from a checkout of this repo.
 
 ## Invocation
 
