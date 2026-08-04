@@ -2,7 +2,7 @@
 
 The per-session-hygiene items that run once per touched repo during Phase 3c. Each item produces zero or more findings; findings follow the shape in `finding-schema.md`.
 
-**Important scope rule:** These items are the *wrap-scope* subset of hygiene. Rare-tier items (master→main, CLAUDE/AGENTS merge, missing README/LICENSE, dead code) are **not** wrap's job — they live in `project-maintenance`. Do not expand this checklist to include them. The **disk-health audit** also stays in PM: flagging large *tracked* files, repo-history bloat, and low-disk warnings is a maintenance concern, not a session-end one. Wrap's one disk-adjacent item is the **junk-files (ephemeral build & import artifacts)** check below — and only because clearing build output *the session itself generated* is a natural session-close concern. It is deliberately scoped to *gitignored, regenerable* dirs that **this session generated or refreshed**, defaults to **keep**, and never touches pre-existing artifacts on a repo the session didn't build. It is not a general large-file or disk-usage sweep.
+**Important scope rule:** These items are the *wrap-scope* subset of hygiene. Rare-tier items (master→main, CLAUDE/AGENTS merge, missing README/LICENSE, dead code) are **not** wrap's job — they live in `project-maintenance`. Do not expand this checklist to include them. The **disk-health audit** also stays in project-maintenance: flagging large *tracked* files, repo-history bloat, and low-disk warnings is a maintenance concern, not a session-end one. Wrap's one disk-adjacent item is the **junk-files (ephemeral build & import artifacts)** check below — and only because clearing build output *the session itself generated* is a natural session-close concern. It is deliberately scoped to *gitignored, regenerable* dirs that **this session generated or refreshed**, defaults to **keep**, and never touches pre-existing artifacts on a repo the session didn't build. It is not a general large-file or disk-usage sweep.
 
 ## Items
 
@@ -53,15 +53,15 @@ When a keep-warm directive is present for the repo:
 
 This carve-out applies to the **Stale worktrees** check as well: a keep-warm worktree is kept by default, surfaced as a quiet opt-in, with no recurring contradiction commentary.
 
-## Operating rules (reused from PM)
+## Operating rules (reused from project-maintenance)
 
 1. **Verify before delete.** Never delete untracked files without per-item approval. Tracked files may be deleted only when (a) the working tree is otherwise clean and (b) the agent can state why the file has served its purpose.
 2. **Research before asking.** Every finding surfaces with evidence, a recommendation, a confidence level, and the exact action on approval. The user should be able to y/n without opening files themselves.
 3. **Log everything.** Every automated action, every user-approved action, and every user-rejected proposal appears in the final summary (Phase 4). Nothing invisible.
 
-## Relationship to PM
+## Relationship to project-maintenance
 
-Wrap's hygiene checklist is a *subset* of PM's former checklist. The two checklist FILES partition the item rows - per-session items live only here, rare-tier items only in PM's `references/checklist.md` - so no row is maintained in two places. The CHECKS themselves overlap on purpose: PM does not invoke wrap, but PM's step 0 re-runs the read-only detection side of this very table, findings-only, against the single repo it is auditing, and feeds any hits into its own propose/approve flow. This file is the single canonical source for the per-session items; PM consumes it by reference. Wrap remains the sole owner of the interactive, autonomous-fix, whole-session version of these checks.
+Wrap's hygiene checklist is a *subset* of project-maintenance's former checklist. The two checklist FILES partition the item rows - per-session items live only here, rare-tier items only in project-maintenance's `references/checklist.md` - so no row is maintained in two places. The CHECKS themselves overlap on purpose: project-maintenance does not invoke wrap, but project-maintenance's step 0 re-runs the read-only detection side of this very table, findings-only, against the single repo it is auditing, and feeds any hits into its own propose/approve flow. This file is the single canonical source for the per-session items; project-maintenance consumes it by reference. Wrap remains the sole owner of the interactive, autonomous-fix, whole-session version of these checks.
 
 ## Tooling
 
