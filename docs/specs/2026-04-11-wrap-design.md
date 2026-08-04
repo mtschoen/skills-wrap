@@ -20,7 +20,7 @@ Both jobs matter. The framing is *"externalize what's about to be destroyed, the
 - **Never auto-runs.** Not triggered by `SessionEnd` hook, not triggered by `Stop` hook, not invoked from other skills programmatically. The user types `/wrap` or it doesn't run. (See *Why intentional-only* below.)
 - **Not a repo audit.** Rare-tier checks — default-branch renames, CLAUDE.md/AGENTS.md merges, missing README/LICENSE, dead-code scans, large-file audits, disk warnings — are **not** wrap's job. Those stay in `project-maintenance`.
 - **Not stateful.** Wrap does not maintain a durable "last wrap" record. Each invocation asks "what's true right now" and acts accordingly. Idempotent re-runs fall out of this.
-- **Not tool-coupled.** Wrap's SKILL.md is written in tool-agnostic prose. It does not name `projdash` MCP functions, CLI tools, or library calls as required. The agent selects the best available tool at runtime.
+- **Not tool-coupled.** Wrap's SKILL.md is written in tool-agnostic prose. It does not name `project-tracker` MCP functions, CLI tools, or library calls as required. The agent selects the best available tool at runtime.
 - **Not cross-session.** If the user starts a new session and runs `/wrap`, wrap only sees what *that* session did. There is no bridge between sessions.
 
 ## Why intentional-only
@@ -69,7 +69,7 @@ Wrap always fans out. One `/wrap` invocation wraps every repo the session touche
 **Detection, in order of precedence:**
 
 1. **Agent recall** — the model reviews its own conversation context and lists paths it edited, created, or ran git commands against. This is the primary source of truth.
-2. **Dirty-scan cross-check** — whatever dirty-detection tooling is available (projdash dirty-scan if present, else `git status` walked across the recalled path set) is used as a safety net to catch repos the model forgot.
+2. **Dirty-scan cross-check** — whatever dirty-detection tooling is available (project-tracker dirty-scan if present, else `git status` walked across the recalled path set) is used as a safety net to catch repos the model forgot.
 3. **User confirmation** — wrap presents the detected set as a single batch and asks the user to add/remove before proceeding.
 
 **Not in scope:** Repos the session only read (no edits, no commits, no git ops). Reading is not touching.
@@ -235,14 +235,13 @@ If no signals fire, the hook prints nothing. Silent is valid.
 ~/skills-dev/wrap/
 ├── README.md                          # overview, install pointer, status
 ├── AUDIT.md                           # pressure-test findings (grows over time)
-├── skill-draft/
-│   ├── SKILL.md                       # the skill itself (frontmatter + prose)
-│   └── references/
-│       ├── categories.md              # memory-offload category checklist (Phase 1 + 2a)
-│       ├── plan-classification.md     # plan classifier rules + "extract first" safety
-│       ├── hygiene-checklist.md       # Phase 2c items, adapted from PM (wrap-scope only)
-│       ├── finding-schema.md          # copied from project-maintenance; divergence OK
-│       └── session-end-reminder.md    # nudge-hook spec + settings.json example
+├── SKILL.md                           # the skill itself (frontmatter + prose)
+├── references/
+│   ├── categories.md                  # memory-offload category checklist (Phase 1 + 2a)
+│   ├── plan-classification.md         # plan classifier rules + "extract first" safety
+│   ├── hygiene-checklist.md           # Phase 2c items, adapted from PM (wrap-scope only)
+│   ├── finding-schema.md              # copied from project-maintenance; divergence OK
+│   └── session-end-reminder.md        # nudge-hook spec + settings.json example
 ├── docs/
 │   ├── specs/
 │   │   └── 2026-04-11-wrap-design.md  # this document
@@ -255,7 +254,7 @@ If no signals fire, the hook prints nothing. Silent is valid.
 
 **SKILL.md triggers** (frontmatter description): user typing `/wrap`, "wrap up", "close out the session", "let's finish this session". Explicit intent only — no passive triggers.
 
-**SKILL.md is tool-agnostic prose.** It describes actions ("find repos with uncommitted changes", "look in the usual spots for plan files"), not tool calls. The agent chooses the best available implementation at runtime (projdash MCP tools if present, raw git otherwise).
+**SKILL.md is tool-agnostic prose.** It describes actions ("find repos with uncommitted changes", "look in the usual spots for plan files"), not tool calls. The agent chooses the best available implementation at runtime (project-tracker MCP tools if present, raw git otherwise).
 
 **`references/finding-schema.md`** is copied from `project-maintenance` at skill-creation time. Drift is acceptable; the two skills serve different purposes and don't need to stay in lockstep.
 
@@ -274,7 +273,7 @@ Skills can't be unit-tested like code — the "unit" is the agent following pros
 7. Merge conflict on wrap's auto-commit → Phase 2d failure path exercised
 8. User cancels mid-run during Phase 2 of 3 repos → partial completion report correct
 9. Session touched a non-git-repo directory → gracefully skipped
-10. projdash present vs absent → correct results via different tool paths
+10. project-tracker present vs absent → correct results via different tool paths
 11. `.claude/scripts/` has one stale scratch + one the user explicitly saved → only stale one is offered for deletion
 12. User has said "don't save this" about a discovery → wrap respects it, doesn't surface in Phase 1
 
@@ -286,12 +285,12 @@ Skills can't be unit-tested like code — the "unit" is the agent following pros
 
 The implementation plan will cover, roughly in order:
 
-1. Scaffold `~/skills-dev/wrap/` with README, AUDIT.md, skill-draft/, docs/, hooks/
-2. Draft `skill-draft/SKILL.md` + all `references/*.md` files
+1. Scaffold `~/skills-dev/wrap/` with README, AUDIT.md, SKILL.md, references/, docs/, hooks/
+2. Draft `SKILL.md` + all `references/*.md` files
 3. Write `hooks/session-end-reminder.sh` and `.ps1`
 4. Draft `docs/pressure-scenarios.md`
 5. Run a subset of pressure scenarios manually, collect evidence, update AUDIT.md
-6. Copy `skill-draft/` to `~/.claude/skills/wrap/` for live use
+6. Copy the repo contents (`SKILL.md`, `references/`, `hooks/`) to `~/.claude/skills/wrap/` for live use
 7. Edit `~/.claude/skills/project-maintenance/SKILL.md` and `references/checklist.md` to delegate to wrap and drop the moved rows
 8. Publish `mtschoen/wrap` to GitHub
 9. Register the SessionEnd hook via `update-config`

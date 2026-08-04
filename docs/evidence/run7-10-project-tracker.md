@@ -1,4 +1,4 @@
-# Scenario 10 — projdash present vs absent (Run 7)
+# Scenario 10 — project-tracker present vs absent (Run 7)
 
 **Date:** 2026-05-26
 **Skill version:** Run 7
@@ -8,11 +8,11 @@
 **Session id:** (from result event)
 **Cost:** (not recorded in result), 7 turns, 122.7s wall.
 
-## Run path: projdash absent (or not used)
+## Run path: project-tracker absent (or not used)
 
-The agent used only raw `Bash` git commands throughout — `git status`, `git rev-parse`, `git log @{u}..HEAD`, `git diff`, `git remote -v`. No `mcp__projdash__*` tool calls appear anywhere in the transcript. This constitutes the "projdash absent" path of scenario 10.
+The agent used only raw `Bash` git commands throughout — `git status`, `git rev-parse`, `git log @{u}..HEAD`, `git diff`, `git remote -v`. No `mcp__project-tracker__*` tool calls appear anywhere in the transcript. This constitutes the "project-tracker absent" path of scenario 10.
 
-The "projdash present" path (using `projdash.find_dirty` etc.) would require a separate run or a session that actively prompted projdash use. Only one run was executed for this scenario, so full equivalence across both paths cannot be demonstrated.
+The "project-tracker present" path (using `project-tracker.find_dirty` etc.) would require a separate run or a session that actively prompted project-tracker use. Only one run was executed for this scenario, so full equivalence across both paths cannot be demonstrated.
 
 ## Tool trace
 
@@ -70,7 +70,7 @@ No destructive action taken. No commit, push, stash, or delete. Data fully intac
 
 ## Analysis
 
-**Status:** Partial — single-run (projdash absent path only); 4-option AskUserQuestion minor deviation; all findings correct.
+**Status:** Partial — single-run (project-tracker absent path only); 4-option AskUserQuestion minor deviation; all findings correct.
 
 - ✓ Phase 0 silently continued.
 - ✓ Phase 1 detected upstream + 2 unpushed commits correctly.
@@ -78,4 +78,4 @@ No destructive action taken. No commit, push, stash, or delete. Data fully intac
 - ✓ Phase 3d `AskUserQuestion` fired (correct tool, correct findings, correct safety gate).
 - ✓ Post-decline summary accurate; no destructive action.
 - ⚠ Branch-off option folded into "Other" text rather than an explicit 5th option — minor vs spec.
-- ⚠ Only "projdash absent" path exercised. Scenario 10's full criterion (equivalent output across both paths) requires a second run with projdash actively consulted. Cannot be confirmed Pass with one run.
+- ⚠ Only "project-tracker absent" path exercised. Scenario 10's full criterion (equivalent output across both paths) requires a second run with project-tracker actively consulted. Cannot be confirmed Pass with one run.

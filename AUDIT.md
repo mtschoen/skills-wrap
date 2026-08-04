@@ -33,7 +33,7 @@ Full 20-run sweep (all 16 scenarios; scenario 15 split into 15a/15b/15c) against
 | 7 | Merge conflict | **Partial** | [run7-07-merge-conflict.md](docs/evidence/run7-07-merge-conflict.md) | Not exercisable headless (no live `MERGE_HEAD` at wrap time). No force-push, no data loss. Fixture needs a pre-staged conflict. |
 | 8 | User cancel mid-run | **Partial** | [run7-08-user-cancel.md](docs/evidence/run7-08-user-cancel.md) | Real cancel can't be injected headless. Ran to completion safely; correct interrupted sentinel on decline. Single-repo (spec wants 3). |
 | 9 | Non-git directory | **Pass** | [run7-09-non-git.md](docs/evidence/run7-09-non-git.md) | Graceful skip, named in summary, completion sentinel. No errors. |
-| 10 | projdash present vs absent | **Partial** | [run7-10-projdash.md](docs/evidence/run7-10-projdash.md) | Raw-git (absent) path only; findings correct. Present-path equivalence unverifiable from a single run. |
+| 10 | project-tracker present vs absent | **Partial** | [run7-10-project-tracker.md](docs/evidence/run7-10-project-tracker.md) | Raw-git (absent) path only; findings correct. Present-path equivalence unverifiable from a single run. |
 | 11 | `.claude/scripts/` mixed | **Partial** | [run7-11-claude-scripts.md](docs/evidence/run7-11-claude-scripts.md) | **Phase 3c engaged on a session that edited nothing — Run 6 finding #0 (cwd-implicit-in-scope) confirmed closed.** `build-once.ps1` flagged, `keep-me.ps1` kept. Exec blocked by 3-option decline. |
 | 12 | "don't save this" | **Pass** | [run7-12-dont-save.md](docs/evidence/run7-12-dont-save.md) | Item explicitly excluded from memory; no Write; skip reason named in summary. |
 | 13 | Background shell | **Pass** | [run7-13-background-shell.md](docs/evidence/run7-13-background-shell.md) | bg-shell → confirm-alive → `AskUserQuestion`(2-opt, auto-Stop) → **`TaskStop` fired (trace-verified)** → named in Phase 2b summary. |
@@ -121,11 +121,11 @@ All 12 scenarios executed via `claude -p --permission-mode acceptEdits --output-
 | 7 | Merge conflict on auto-commit | **Partial** (simulated) | [07-merge-conflict.md](docs/evidence/07-merge-conflict.md) | Contrived scenario can't be fully tested non-interactively. Pre-existing conflict state detected; no force-push, no data loss. |
 | 8 | User cancel mid-run | **Partial** (simulated) | [08-user-cancel.md](docs/evidence/08-user-cancel.md) | Simulated via AskUserQuestion denial. Skill stops cleanly, no destructive actions. |
 | 9 | Non-git directory | **Pass** | [09-non-git-directory.md](docs/evidence/09-non-git-directory.md) | Handled gracefully. No errors, clean "nothing to wrap" summary. |
-| 10 | projdash present vs absent | **Partial** | [10-projdash-present-vs-absent.md](docs/evidence/10-projdash-present-vs-absent.md) | projdash MCP not configured in test environment; both runs used raw-git path. Equivalent output confirmed but MCP branch not exercised. |
+| 10 | project-tracker present vs absent | **Partial** | [10-project-tracker-present-vs-absent.md](docs/evidence/10-project-tracker-present-vs-absent.md) | project-tracker MCP not configured in test environment; both runs used raw-git path. Equivalent output confirmed but MCP branch not exercised. |
 | 11 | `.claude/scripts/` KEEP marker | **Pass** | [11-claude-scripts-mixed.md](docs/evidence/11-claude-scripts-mixed.md) | KEEP marker detection worked exactly as spec'd. `build-once.ps1` flagged; `keep-me.ps1` untouched. |
 | 12 | "don't save this" respected | **Pass** | [12-dont-save-this.md](docs/evidence/12-dont-save-this.md) | Phase 1 explicitly honored the in-session preference; no memory written. |
 
-**Summary:** 5 pass / 7 partial / 0 fail. Every "partial" result is a testing-infrastructure limitation, not a skill defect — detection and classification worked in all 7 cases.
+**Summary:** 5 pass / 7 partial / 0 fail. Most "partial" results are testing-infrastructure limitations, not skill defects - detection and classification worked in all 7 cases. One exception: scenario 5 proposed *delete* instead of *archive*, a genuine spec-clarity gap in `references/plan-classification.md` (see that scenario's note above), not a harness artifact.
 
 ## Run 2 — 2026-04-11 (dogfood)
 
@@ -150,7 +150,7 @@ All 12 scenarios executed via `claude -p --permission-mode acceptEdits --output-
 **Phase 2 (per-repo loop):**
 
 - *Repo: `~/skills-dev/wrap/`* — clean tree, no unpushed commits, no temp files, no scratch, no worktrees, no extra branches. Plans sweep classified the implementation plan as Completed+tracked → deleted (this very wrap commit). The design spec stayed (it's a Reference doc, not a plan). PM delegation edits verified present.
-- *Repo: `~/skills-dev/project-maintenance/`* — not a git repo, only the delegation edits to verify. Both files (`skill-draft/SKILL.md` + `skill-draft/references/checklist.md`) still contain the wrap-relationship and the moved-rows note. No action.
+- *Repo: `~/skills-dev/project-maintenance/`* — not a git repo, only the delegation edits to verify. Both files (`SKILL.md` + `references/checklist.md`) still contain the wrap-relationship and the moved-rows note. No action.
 
 **Phase 2d (commit decision):** Wrap's own edits this run = (1) deletion of `docs/plans/2026-04-11-wrap-implementation.md`, (2) this AUDIT.md addition. One auto-commit with `Wrap-Session-Id` trailer. No user work pending in either repo.
 
@@ -316,12 +316,12 @@ Phase 0 was added as an Outstanding-asks check (fork: finish-first / wrap-with-h
     "name": "wrap",
     "version": "0.1.0",
     "description": "Session-closing ritual: memory offload + repo hygiene",
-    "skills": ["skill-draft"]
+    "skills": ["."]
   }
   ```
 
   (Field names speculative — verify against an existing plugin's manifest, e.g. `~/.claude/plugins/marketplaces/claude-plugins-official/plugins/commit-commands/.claude-plugin/plugin.json`.)
-- Decide whether `skill-draft/` or a renamed `skills/wrap/` directory is the canonical location for the deployed skill inside the plugin layout. The current `skill-draft/` name is dev-flavored and may need renaming for plugin packaging.
+- The repo already uses the root layout (`SKILL.md` + `references/` at the repo root, no nested skill directory), so the canonical-location question this item originally raised is resolved - the plugin manifest just needs to point at the repo root.
 - Update README with install instructions: `claude plugin install github.com/mtschoen/wrap` (or whatever the actual command is).
 - Optionally: list it in a marketplace registry so others can find it. Marketplaces use a manifest JSON listing plugins.
 - Test the install locally first: `claude plugin install ~/skills-dev/wrap` and verify `/wrap` shows up in a fresh session.
@@ -346,26 +346,26 @@ Phase 0 was added as an Outstanding-asks check (fork: finish-first / wrap-with-h
 
 **Effort:** Medium. ~1 focused session to script + run + analyze.
 
-#### 3. Register projdash as an MCP server + re-run scenario 10
+#### 3. Register project-tracker as an MCP server + re-run scenario 10
 
-**What:** Wrap's tool-agnostic prose says "use projdash MCP tools if present, otherwise raw git". Run 1 couldn't exercise the projdash branch because the test environment didn't have projdash registered as an MCP server in `~/.claude/settings.json`.
+**What:** Wrap's tool-agnostic prose says "use project-tracker MCP tools if present, otherwise raw git". Run 1 couldn't exercise the project-tracker branch because the test environment didn't have project-tracker registered as an MCP server in `~/.claude/settings.json`.
 
-- Verify projdash supports MCP server mode: `cd ~/projdash && projdash mcp --help` (per `~/projdash/CLAUDE.md`, the `projdash mcp` command starts an MCP server on stdio transport).
-- Add projdash to `~/.claude/settings.json` mcpServers:
+- Verify project-tracker supports MCP server mode: `cd ~/project-tracker && project-tracker mcp --help` (per `~/project-tracker/CLAUDE.md`, the `project-tracker mcp` command starts an MCP server on stdio transport).
+- Add project-tracker to `~/.claude/settings.json` mcpServers:
 
   ```json
   "mcpServers": {
-    "projdash": {
-      "command": "projdash",
+    "project-tracker": {
+      "command": "project-tracker",
       "args": ["mcp"]
     }
   }
   ```
 
-- Confirm the projdash MCP tools appear in `/mcp` list in a fresh session.
-- Re-run scenario 10 (projdash present vs absent) — once with projdash registered, once with it removed (`--settings '{"mcpServers":{}}'`). Compare outputs to verify they're equivalent at the user-visible layer (the whole point of tool-agnostic prose).
+- Confirm the project-tracker MCP tools appear in `/mcp` list in a fresh session.
+- Re-run scenario 10 (project-tracker present vs absent) — once with project-tracker registered, once with it removed (`--settings '{"mcpServers":{}}'`). Compare outputs to verify they're equivalent at the user-visible layer (the whole point of tool-agnostic prose).
 - Update AUDIT.md scenario 10 row from Partial to Pass if the comparison succeeds.
 
-**Effort:** Tiny if projdash MCP works out of the box — 5 minutes. Could grow if projdash MCP needs configuration or has bugs.
+**Effort:** Tiny if project-tracker MCP works out of the box — 5 minutes. Could grow if project-tracker MCP needs configuration or has bugs.
 
-**Speculative note:** depends on whether you actually want projdash always-on as an MCP server. If you only invoke projdash manually via CLI, this isn't worth the always-on cost; just configure it for the test runs and remove after.
+**Speculative note:** depends on whether you actually want project-tracker always-on as an MCP server. If you only invoke project-tracker manually via CLI, this isn't worth the always-on cost; just configure it for the test runs and remove after.
