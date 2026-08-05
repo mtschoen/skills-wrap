@@ -91,7 +91,7 @@ Cross-cutting things not tied to any one project. Only done once per wrap, befor
 
 **2a. Memory offload.**
 
-1. Review your conversation context (plus the on-disk transcript at `~/.claude/projects/<slug>/<session-id>.jsonl` if your context has been compacted and you need to recover earlier content). Include recent output from any background shells or subagents (read via `TaskOutput` or the platform equivalent) - loose threads hiding in their output count, including output from tasks that completed during the session but whose results you never explicitly harvested.
+1. Review your conversation context (plus the on-disk session transcript, if your harness persists one, when your context has been compacted and you need to recover earlier content). Include recent output from any background shells or subagents (read via `TaskOutput` or the platform equivalent) - loose threads hiding in their output count, including output from tasks that completed during the session but whose results you never explicitly harvested.
 2. Walk the **cross-project categories** section of `references/categories.md` in order. For each category, ask yourself *"is there anything in this category from this session worth saving?"* and draft candidate items.
 3. Each draft item is a concrete: what to save, where to save it, and why.
 4. Surface the full set as a single `AskUserQuestion` batch. Let the user approve, edit, or reject the whole set.
@@ -252,6 +252,6 @@ The two sentinels are distinct on purpose: the "go ahead and close" line is the 
 
 ## Companion scripts
 
-User-facing diagnostic utilities shipped alongside the skill, scanning the agent's session transcripts (Claude Code: `~/.claude/projects`, overridable via the `AGENT_SESSIONS_DIR` env var). Not invoked during the wrap procedure itself.
+User-facing diagnostic utilities shipped alongside the skill, scanning the agent's session transcripts, overridable via the `AGENT_SESSIONS_DIR` env var. Not invoked during the wrap procedure itself.
 
 - `scripts/find-unwrapped.sh` (bash) and `scripts/find-unwrapped.ps1` (PowerShell) - list recent agent sessions that did NOT end with `/wrap`. Useful for recovering after a crash, a culled agent process, or just answering *"did I leave anything dangling?"*. Defaults filter to sessions since 2026-04-30 (the earliest observed real `/wrap` invocation - routine adoption lagged the skill's 2026-04-11 first commit by a few weeks), ≥50 KB, excluding `wrap-test*` scratch projects. Override the date cutoff with `--since`/`--no-since` (bash) or `-Since`/`-NoSince` (PS). Run with `--help` (bash) or `Get-Help` (PS) for full options.
