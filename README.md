@@ -22,7 +22,7 @@ Non-goals, all deliberate:
 
 Stable, pressure-tested through Run 7c across 19 scenarios (20 are now specified). No safety violations in any run; the two genuine failures Run 7 found were fixed and re-verified in Run 7b/7c.
 
-As of 2026-08-04 the skill asks in prose rather than through a structured question widget, so the recorded results predate the current ask mechanism and a re-baseline run is outstanding. `tests/run-audit.sh` makes that repeatable. See `AUDIT.md` for full results and the open list.
+As of 2026-08-04 the skill asks in prose rather than through a structured question widget. Every headless-capable scenario was re-baselined against that mechanism on 2026-08-05 (Runs 8, 9 and 9b), and all of them in a **clean room** - wrap alone, without the operator's own hooks, skills, MCP servers or memory files, which is how a third party gets it. A no-skill control ran alongside, to separate what the skill does from what the model does unaided. `tests/run-audit.sh` makes both repeatable. See `AUDIT.md` for full results and the open list.
 
 This skill is part of the completion suite: `maintaining-full-coverage`, `smoke-test`, `docs-update`, `escalate-over-shortcut`, and `wrap`. Suite skills install separately (each lives in its own repo) but are designed to be installed together, and they reference each other directly. Each works standalone; treat cross-references to missing suite members as optional.
 

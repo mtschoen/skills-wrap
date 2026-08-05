@@ -233,11 +233,15 @@ The task is deliberate: the subagent's *analysis* (opinions, recommendations, ar
 The harness in `tests/` automates setup and capture for every headless-capable scenario:
 
 ```bash
-./tests/run-audit.sh -l          # list
-./tests/run-audit.sh 17 18 19    # run a few
+./tests/run-audit.sh -l                     # list
+./tests/run-audit.sh 17 18 19               # run a few
+./tests/run-audit.sh -c -o C:/audit 17 18   # clean room: wrap without your own config
+./tests/run-audit.sh -C -o C:/audit 17 18   # control: same fixtures, no wrap at all
 ```
 
-It builds the fixture, drives the installed skill, and applies mechanical checks (no question widget, a closing sentinel, per-scenario safety assertions). Its green result is permission to review, **not** a pass - the judgment-heavy criteria above still need a human reading the trace. Scenarios 7 and 8 need a live interactive session and are reported as skipped.
+It builds the fixture, drives the skill, and applies mechanical checks (no question widget, a closing sentinel, per-scenario safety assertions). Its green result is permission to review, **not** a pass - the judgment-heavy criteria above still need a human reading the trace. Scenarios 7 and 8 need a live interactive session and are reported as skipped.
+
+Prefer `-c` for anything measuring the skill itself: the default mode runs inside your own agent configuration, so it measures skill-plus-environment. Full isolation also needs `WRAP_AUDIT_CONFIG_DIR` and a fixture root outside `$HOME` - see `tests/README.md`.
 
 By hand:
 
