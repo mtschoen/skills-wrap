@@ -78,6 +78,56 @@ session had quoted the fork's own option description back while asking. The
 criterion is now measured on disk. Same family as the four Run 8 defects - a
 grep over a trace that contains the skill's vocabulary measures the vocabulary.
 
+## Run 9b - 2026-08-05 (the remaining 11 scenarios, clean room)
+
+The rest of the headless-capable set, same room as Run 9. **Cost: $5.56**
+($5.08 for eleven, $0.48 for one re-run). Model: sonnet. With this, **every
+headless-capable scenario has now been run against the prose-ask skill**, and
+all of them in the clean room.
+
+| # | scenario | result | notes |
+| --- | --- | --- | --- |
+| 3 | multi-repo | **Pass** | one commit decision applied across all three repos |
+| 4 | completed-plan | **Pass** | completed + tracked plan deleted, no loose threads to extract |
+| 5 | abandoned-plan | **Pass** | classified Abandoned, **archived not deleted**, intent saved to memory |
+| 6 | loose-thread | **Pass** | thread extracted to a new plan file *before* the old one was deleted |
+| 9 | non-git | **Pass** | 1 turn; no repo invented, nothing fabricated to do |
+| 11 | claude-scripts | **Pass** | `# KEEP:` script survived, the one-off was deleted |
+| 12 | dont-save | **Pass** | refused the entry *and* a generalized version of it |
+| 13 | background-shell | **Pass** | `TaskStop` fired, removal confirmed |
+| 14 | subagent-loose-thread | **Pass** | subagent's findings externalized before close |
+| 16 | kvetch | **Pass** (re-run) | fixture defect first time; [evidence](evidence/run9-16-kvetch.md) |
+| 19 | no-build-overfire | **Pass** | check was wrong, not the run - below |
+
+### Two harness defects, both making a passing run look like a failure
+
+- **Scenario 16's fixture contradicted its own invocation.** The prompt says the
+  docstring was added; the shared `12 | 16` fixture never added one. The session
+  correctly disputed the premise and raised a Phase 0 fork about the missing
+  docstring - which is the exact thing the scenario asserts must not happen, so
+  the run tested nothing. Fixture now applies the docstring, uncommitted. On the
+  re-run: no fork, no fabricated ask, straight into Phase 2a.
+- **Scenario 19's check was stricter than scenario 19.** It failed any mention of
+  `node_modules`, while the written pass criteria allow naming it *to rule it
+  out* ("...explicitly recognized as out of scope, **or simply never
+  mentioned**"). The run's only mention was *"gitignored but pre-existing (not
+  generated this session), so it's out of scope for cleanup"* - the spec's
+  preferred behaviour, verbatim, scored as an over-fire. The check now matches a
+  keep-or-clear *prompt* rather than the noun.
+
+Both are the same failure the Run 8 and Run 9 harness defects were: the check
+encoded a proxy for the criterion instead of the criterion.
+
+### One observation worth a decision
+
+Scenario 16's kvetch - *"we should rewrite the whole module from scratch one
+day"* - did not become work, but it **did** become a Phase 2a memory candidate,
+offered with its default stated. That is not the fail mode the scenario names
+(which is about the handoff branch), and scenario 12 shows the instruction-aware
+half works: told not to save something, wrap refuses it and its generalizations.
+Whether an unprompted kvetch should reach memory at all is a `SKILL.md` Phase 2a
+question, not something the current text forbids. Left open deliberately.
+
 ## Clean-room mode - 2026-08-05 (harness, open item #10)
 
 Every result below Run 8 was produced inside the operator's own configuration.
@@ -641,7 +691,10 @@ deliberately deferred: revisit only if real-world wraps misbehave, rather than
 over-tuning fixtures speculatively. Carried forward into `tests/run-audit.sh`
 unchanged, with the reasoning noted at the prompt table.
 
-#### 9. Run 8 - re-validate against the prose-ask skill
+#### 9. Re-validate against the prose-ask skill - DONE 2026-08-05
+
+Kept in full because the priority ordering and the harness-defect trail are the
+useful part of it. The closing status is at the bottom of the item.
 
 Every result above Run 7c was produced against a skill that asked through
 `AskUserQuestion`. That mechanism is gone (see the 2026-08-04 section at the top),
@@ -659,13 +712,15 @@ previously read "2 and 3"; the tool-path equivalence is scenario 10.)
 defects were found and fixed along the way, which is why the priority four cost
 $4.01 rather than the ~$2 the per-scenario rate implies.
 
-**Status 2026-08-05 (Run 9):** 17 and 18 - Run 7's two outright FAILs - now pass,
-along with 2, 15, 20 and 21, all in the clean room. Scenario 1 passed there too,
-during harness validation.
+**DONE 2026-08-05 (Runs 9 and 9b).** Every headless-capable scenario has now been
+run against the prose-ask skill, all of them in the clean room: 1, 2, 3, 4, 5, 6,
+9, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 **Pass**, 21 **Partial** (the soft
+announce-before-acting criterion, unbound 0 of 4). 10 was covered in Run 8, and
+its two-arm MCP comparison is the one thing that still needs installed mode. 7
+and 8 remain manual-only - a headless `-p` run cannot produce a real Ctrl+C or a
+live `MERGE_HEAD`.
 
-**Remaining:** 3, 4, 5, 6, 9, 11, 12, 13, 14, 16, 19. Budget roughly $5 at the
-observed per-scenario rate, and run them with `-c` unless a scenario is
-specifically about the operator's environment (scenario 10's two-arm MCP
-comparison is the one that needs installed mode).
+Total to get here: $3.82 (Run 9, incl. the control) + $5.56 (Run 9b).
 
-**Effort:** medium - one focused session plus roughly Run 7's token cost.
+**What is left for this item:** nothing headless. Scenarios 7 and 8 by hand, and
+scenario 10's installed-mode MCP comparison if it is ever worth re-running.

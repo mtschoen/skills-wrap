@@ -331,6 +331,24 @@ build_fixture() {
 		git -C "$repo" add .
 		git -C "$repo" commit -qm "add legacy module"
 		git -C "$repo" push -q origin main
+		# 16's invocation says the docstring was added this session, so it has to
+		# actually be there, uncommitted. Without it the session spends its first
+		# turn disputing the premise and raises a Phase 0 fork about the missing
+		# docstring - which is a correct response to a broken fixture, and makes
+		# the run say nothing about the kvetch the scenario exists to test
+		# (observed Run 9b; same defect Run 8 fixed for scenario 15).
+		if [ "$n" = 16 ]; then
+			cat >"$repo/src/legacy_module.js" <<-'EOF'
+				/**
+				 * Normalize raw user input by trimming surrounding whitespace.
+				 * @param {string} raw
+				 * @returns {string}
+				 */
+				function parseInput(raw) {
+				  return raw.trim();
+				}
+			EOF
+		fi
 		;;
 	13 | 14)
 		new_repo "$repo"
@@ -801,8 +819,15 @@ scenario_checks() {
 		fi
 		;;
 	19)
-		if assistant_lines "$trace" | grep -qiE "node_modules|keep or clear|keep-or-clear"; then
-			echo "FAIL junk-check-overfired (mentioned artifacts on a no-build session)"
+		# The scenario's own pass criteria allow naming pre-existing node_modules
+		# to rule it OUT ("...explicitly recognized as out of scope, or simply
+		# never mentioned"). Being *asked* about it is the failure, not the word
+		# appearing: Run 9b failed a run whose only mention was "gitignored but
+		# pre-existing, so it's out of scope for cleanup", which is the spec's
+		# preferred behaviour verbatim. So match a prompt, not a noun.
+		if assistant_lines "$trace" |
+			grep -qiE "keep or clear|keep-or-clear|\*\*[a-z]\*\*[^*]*node_modules"; then
+			echo "FAIL junk-check-overfired (asked about artifacts on a no-build session)"
 		else
 			echo "PASS junk-check-silent"
 		fi
