@@ -28,22 +28,11 @@ This skill is part of the completion suite: `maintaining-full-coverage`, `smoke-
 
 ## Install
 
-### As a plain skill
-
 1. Copy the repo contents (`SKILL.md`, `references/`, `hooks/`) to `~/.agents/skills/wrap/` (or wherever your agent harness reads skills).
 2. Register a session-end hook in the agent's settings - use the `update-config` skill, pointing it at `hooks/session-end-reminder.sh` (Unix/macOS) or `hooks/session-end-reminder.ps1` (Windows). This step depends on the harness supporting session-end hooks; not every harness does.
 3. (Optional) The `scripts/find-unwrapped.sh` / `.ps1` companions are diagnostics that scan the agent's session transcripts and are not required for `/wrap` itself - copy `scripts/` too if you want them, or just run them from a checkout of this repo. Override the default transcript root with the `AGENTS_SESSIONS_DIR` env var.
 
-### As a Claude Code plugin
-
-A plugin discovers skills under `skills/<name>/`, which is not this repo's layout, so the plugin tree is generated rather than committed twice:
-
-```bash
-./scripts/build-plugin.sh          # writes build/plugin/
-claude plugin install "$PWD/build/plugin"
-```
-
-The generated tree carries `hooks/hooks.json`, so the session-end nudge registers itself - step 2 above is not needed on this path.
+Wrap ships no packaging of its own, by policy: installation is a concern of the whole skill collection, not of one skill. The supported path is the `skills-dev` collection's own installer. A standalone clone of this repo is a hand-install, as above.
 
 ## Invocation
 

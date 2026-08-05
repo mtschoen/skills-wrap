@@ -1,9 +1,0 @@
-{
-  "name": "wrap",
-  "version": "1.0.0",
-  "description": "Session-closing ritual for a coding agent: externalize ephemeral working memory into durable artifacts, then bring every touched repo into a clean state for the next session. Ships a decoupled SessionEnd nudge hook that reminds without ever auto-running the wrap.",
-  "author": {
-    "name": "Matt Schoen"
-  },
-  "homepage": "https://github.com/mtschoen/skills-wrap"
-}

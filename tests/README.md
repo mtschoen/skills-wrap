@@ -73,18 +73,22 @@ this way may be the environment talking.
 | --- | --- |
 | `--setting-sources project` | user-level settings, so the hooks, and with them every user-installed skill (57 to 17 here) |
 | `--strict-mcp-config` | user-scope MCP servers, so project-tracker is genuinely absent |
-| `--plugin-dir` | re-supplies wrap alone, as the plugin a third party installs |
+| `--plugin-dir` | re-supplies wrap alone, pointed at this checkout |
 
 Two consequences to keep in mind:
 
-- **`-c` audits this checkout, not what you installed.** It builds the plugin
-  tree with `scripts/build-plugin.sh` at run start. That is the opposite of the
-  default mode's rule, and the banner says which one you are in. Point
-  `WRAP_AUDIT_PLUGIN_DIR` at an existing tree to audit that instead.
-- **A plugin skill is namespaced**, so the clean room is driven with
-  `/wrap:wrap`. A bare `/wrap` resolves to nothing and the session improvises a
-  wrap-shaped answer from the skill's one-line description - which reads like a
-  pass while testing nothing. The harness rewrites the prompts for you.
+- **`-c` audits this checkout, not what you installed.** `--plugin-dir` gets the
+  repo root directly: a directory holding a `SKILL.md` with no `skills/`
+  subdirectory loads as a single-skill plugin, so there is nothing to assemble
+  first. That is the opposite of the default mode's rule, and the banner says
+  which one you are in. Point `WRAP_AUDIT_PLUGIN_DIR` at another checkout to
+  audit that instead.
+- **A plugin skill is namespaced** by its directory's basename, so the clean
+  room is driven with `/wrap:wrap`. A bare `/wrap` resolves to nothing and the
+  session improvises a wrap-shaped answer from the skill's one-line description
+  - which reads like a pass while testing nothing. The harness derives the token
+  from the directory and prints it in the banner, so a checkout under a
+  different name still works.
 
 `-C` is the control: identical isolation, no wrap at all, and `/wrap` in the
 prompt becomes "Let's wrap up the session." It answers what the base model does

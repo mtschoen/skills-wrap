@@ -126,8 +126,8 @@ REQUESTED="$*"
 #   --setting-sources project  drops user-level settings, hence the hooks, and
 #                              with them every user-installed skill (57 -> ~17)
 #   --strict-mcp-config        drops user-scope MCP servers (project-tracker)
-#   --plugin-dir               re-supplies wrap, from THIS CHECKOUT, as the
-#                              plugin a third party would install
+#   --plugin-dir               re-supplies wrap, from THIS CHECKOUT, pointed
+#                              straight at the repo root
 #
 # -C is the same isolation with no wrap at all: the control that says which
 # behaviours are the skill and which were the base model all along.
@@ -144,6 +144,7 @@ REQUESTED="$*"
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 MODE_ARGS=()
 PLUGIN_DIR=""
+PLUGIN_NS=""
 
 # A native claude.exe cannot resolve the POSIX paths git-bash deals in, so paths
 # handed to it - or compared against ones it reports - go through here first.
@@ -191,14 +192,18 @@ if [ "$MODE" != "installed" ]; then
 fi
 
 if [ "$MODE" = "clean" ]; then
-	PLUGIN_DIR="$(canonical_path "${WRAP_AUDIT_PLUGIN_DIR:-$OUTDIR/plugin}")"
-	if [ -z "${WRAP_AUDIT_PLUGIN_DIR:-}" ]; then
-		"$REPO_ROOT/scripts/build-plugin.sh" "$PLUGIN_DIR" >/dev/null
-	fi
-	[ -f "$PLUGIN_DIR/skills/wrap/SKILL.md" ] || {
-		echo "error: no wrap skill under $PLUGIN_DIR" >&2
+	# --plugin-dir takes the checkout itself. A directory holding a SKILL.md
+	# with no skills/ subdirectory loads as a single-skill plugin (Claude Code
+	# >= 2.1.142), so there is nothing to assemble first.
+	PLUGIN_DIR="$(canonical_path "${WRAP_AUDIT_PLUGIN_DIR:-$REPO_ROOT}")"
+	[ -f "$PLUGIN_DIR/SKILL.md" ] || {
+		echo "error: no SKILL.md at $PLUGIN_DIR" >&2
 		exit 1
 	}
+	# The namespace is the plugin directory's basename, and the invocation token
+	# is built from it below. Deriving it beats hardcoding `wrap`: a mismatch
+	# does not error, it silently resolves to nothing (see adapt_prompt).
+	PLUGIN_NS="$(basename "$PLUGIN_DIR")"
 	MODE_ARGS+=(--plugin-dir "$PLUGIN_DIR")
 fi
 
@@ -460,16 +465,17 @@ scenario_prompt() {
 	esac
 }
 
-# The invocation token is mode-dependent. A plugin skill is namespaced, so the
-# clean room answers to `/wrap:wrap` and a bare `/wrap` silently resolves to
-# nothing - the session then improvises a plausible-looking wrap out of the
-# skill's one-line description, which reads like a pass and tests nothing (cost
-# $0.25 to discover). The control has no skill to name at all, so it gets the
+# The invocation token is mode-dependent. A plugin skill is namespaced by its
+# plugin directory, so the clean room answers to `/<basename>:wrap` - normally
+# `/wrap:wrap` - and a bare `/wrap` silently resolves to nothing. The session
+# then improvises a plausible-looking wrap out of the skill's one-line
+# description, which reads like a pass and tests nothing (cost $0.25 to
+# discover). The control has no skill to name at all, so it gets the
 # plain-English ask a user would type if they had never installed one.
 adapt_prompt() {
 	local prompt="$1"
 	case "$MODE" in
-	clean) printf '%s' "${prompt//"/wrap"/"/wrap:wrap"}" ;;
+	clean) printf '%s' "${prompt//"/wrap"/"/$PLUGIN_NS:wrap"}" ;;
 	control) printf '%s' "${prompt//"/wrap"/"Let's wrap up the session."}" ;;
 	*) printf '%s' "$prompt" ;;
 	esac
@@ -843,6 +849,7 @@ echo "wrap audit: model=$MODEL outdir=$OUTDIR mode=$MODE"
 case "$MODE" in
 clean)
 	echo "clean room: wrap from $PLUGIN_DIR (this checkout, NOT what you installed)"
+	echo "clean room: invoked as /$PLUGIN_NS:wrap"
 	;;
 control)
 	echo "control: no wrap installed - these runs show the model unaided, and"

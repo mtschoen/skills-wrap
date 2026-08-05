@@ -34,9 +34,7 @@ The hook sees only the session's final `cwd`. If the session touched multiple re
 
 ## Registering the hook
 
-The snippet shape depends on how the skill got onto disk - a manual copy vs. a plugin install register differently. Pick the one that matches this install.
-
-**Manual install** (the skill copied directly into `~/.claude/skills/wrap/`): register via a `SessionEnd` entry in `~/.claude/settings.json`, with a literal path to the hook script:
+Register via a `SessionEnd` entry in `~/.claude/settings.json`, with a literal path to the hook script:
 
 ```json
 {
@@ -66,25 +64,7 @@ On Windows, substitute `session-end-reminder.ps1`:
 
 Use the `update-config` skill to perform the registration rather than hand-editing `settings.json`.
 
-**Plugin install**: this shape does not apply. A plugin lands under a versioned plugin-cache path (e.g. `~/.claude/plugins/cache/<marketplace>/wrap/<version>/`) that changes on every version bump, and the plugin registers its own hooks via a `hooks.json` manifest shipped alongside it - there is no user `settings.json` edit at all. The manifest resolves the install path at runtime with `${CLAUDE_PLUGIN_ROOT}` instead of a literal path:
-
-```json
-{
-  "hooks": {
-    "SessionEnd": [
-      {
-        "hooks": [
-          { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-end-reminder.sh" }
-        ]
-      }
-    ]
-  }
-}
-```
-
-Don't paste the manual-install snippet into a plugin's `hooks.json` (a literal `~/.claude/skills/wrap/...` path breaks the moment the plugin version bumps) or the plugin snippet into a hand-edited `settings.json` (`${CLAUDE_PLUGIN_ROOT}` has no meaning there).
-
-Note the manifest is the **plugin author's** responsibility, not the installing user's: `hooks/hooks.json` lives at the plugin root and Claude Code auto-loads it when the plugin is enabled - a skill directory inside a plugin cannot self-register its hooks. If a plugin bundles this skill without shipping that manifest, the hook simply never fires until the user wires it manually via the manual-install path above.
+If some future packaging lands the skill at a path that moves between versions, a literal path like the one above goes stale on every bump; that packaging is responsible for registering the hook itself, and this file's snippet no longer applies.
 
 ## What the hook must NOT do
 

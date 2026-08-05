@@ -1,9 +1,6 @@
 # Eval workspace (generated locally, never shipped)
 workspace/
 
-# Generated plugin tree (scripts/build-plugin.sh)
-build/
-
 # Python
 __pycache__/
 *.pyc
