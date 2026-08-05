@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# find-unwrapped.sh — List recent Claude Code sessions that did NOT end with /wrap.
+# find-unwrapped.sh — List recent agent sessions that did NOT end with /wrap.
+# Scans the agent's session transcripts (Claude Code: ~/.claude/projects).
 #
 # Heuristic: grep each session JSONL for any of:
 #   - "skill":"wrap" / "attributionSkill":"wrap"  (Skill-tool invocation)
@@ -43,7 +44,7 @@ set -euo pipefail
 # is missed by the older `"skill":"wrap"`-only heuristic.
 wrap_marker_pattern='"(skill|attributionSkill)":"wrap"|<command-name>/wrap</command-name>|Launching skill: wrap'
 
-projects_dir="${CLAUDE_PROJECTS_DIR:-$HOME/.claude/projects}"
+projects_dir="${AGENT_SESSIONS_DIR:-$HOME/.claude/projects}"
 limit=50
 since='2026-04-30'
 min_bytes=50000
@@ -63,7 +64,7 @@ while [[ $# -gt 0 ]]; do
         --all)       show_all=1; shift ;;
         --raw)       raw=1; shift ;;
         -h|--help)
-            sed -n '2,37p' "$0" | sed 's/^# \{0,1\}//'
+            sed -n '2,38p' "$0" | sed 's/^# \{0,1\}//'
             exit 0
             ;;
         *) echo "unknown argument: $1" >&2; exit 2 ;;

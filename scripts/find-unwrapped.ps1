@@ -1,6 +1,7 @@
 <#
 .SYNOPSIS
-    List recent Claude Code sessions that did NOT end with /wrap.
+    List recent agent sessions that did NOT end with /wrap.
+    Scans the agent's session transcripts (Claude Code: ~/.claude/projects).
 
 .DESCRIPTION
     Heuristic: scan each session JSONL for any of:
@@ -71,7 +72,7 @@ $ErrorActionPreference = 'Stop'
 # is missed by the older "skill":"wrap"-only heuristic.
 $wrapMarkerPattern = '"(skill|attributionSkill)":"wrap"|<command-name>/wrap</command-name>|Launching skill: wrap'
 
-$projectsDir = if ($env:CLAUDE_PROJECTS_DIR) { $env:CLAUDE_PROJECTS_DIR } else { Join-Path $HOME '.claude\projects' }
+$projectsDir = if ($env:AGENT_SESSIONS_DIR) { $env:AGENT_SESSIONS_DIR } else { Join-Path $HOME '.claude\projects' }
 if (-not (Test-Path $projectsDir)) {
     Write-Error "no projects dir at $projectsDir"
     exit 1
