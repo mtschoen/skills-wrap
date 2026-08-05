@@ -118,15 +118,28 @@ all of them in the clean room.
 Both are the same failure the Run 8 and Run 9 harness defects were: the check
 encoded a proxy for the criterion instead of the criterion.
 
-### One observation worth a decision
+### One observation, decided 2026-08-05: correct as-is, no change
 
 Scenario 16's kvetch - *"we should rewrite the whole module from scratch one
 day"* - did not become work, but it **did** become a Phase 2a memory candidate,
 offered with its default stated. That is not the fail mode the scenario names
 (which is about the handoff branch), and scenario 12 shows the instruction-aware
 half works: told not to save something, wrap refuses it and its generalizations.
-Whether an unprompted kvetch should reach memory at all is a `SKILL.md` Phase 2a
-question, not something the current text forbids. Left open deliberately.
+
+**Decision (user, 2026-08-05): this is the desired behavior. No `SKILL.md`
+change, no new criterion.** The two halves are separable and wrap got both
+right: it correctly read the kvetch as *not* a request to start the rewrite,
+and it captured the note for a future session. A remark the user chose to make
+in a session they then asked to have wrapped is fair game for memory; if they
+want it dropped, the item is surfaced with its default stated and "drop 1"
+costs them two words. Deliberately **not** adopted: a proposed Phase 2a rule to
+record the observation but discard the uncommitted intention. It splits a
+distinction finer than the value it protects, and it is the same species as the
+announce-before-acting rule that went 0 of 4 unbound (see Run 8b), so it would
+likely have cost skill text without binding.
+
+Do not reopen this without new evidence of a concrete harm - a saved kvetch
+that a later session actually misread as a standing plan.
 
 ## Clean-room mode - 2026-08-05 (harness, open item #10)
 

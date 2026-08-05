@@ -51,3 +51,9 @@ create one - for it, or for a generalized version of it."* Here no such
 instruction existed. If kvetches should not reach memory absent an instruction,
 that is a change to `SKILL.md` Phase 2a and a new criterion in this scenario,
 not something the current text asks for.
+
+**Closed 2026-08-05: no change.** The user's call is that this is the desired
+behavior - wrap correctly declined to start the rewrite *and* correctly kept
+the note for later, and a remark made in a session the user then asked to wrap
+is fair game for memory. Rationale and the rejected alternative are in
+`AUDIT.md` under Run 9b.
