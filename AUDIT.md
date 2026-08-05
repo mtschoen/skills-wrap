@@ -25,6 +25,108 @@ Also changed in the same pass: a no-fan-out carve-out for harnesses that forbid
 subagent dispatch, and a Phase 0 rule against re-asking a fork the invocation
 already answered.
 
+## Run 8b - 2026-08-05 (ask-design change + verification)
+
+Run 8's finding #1 and the user's own question - *"is there a better alternative
+than letters?"* - produced a redesign of how wrap asks, then a verification
+sweep. **Cost: $6.87** including two misdriven runs (below). Model: sonnet.
+
+### What changed in the skill
+
+- **Principle 8** now carries the whole ask contract: **letters name actions,
+  numbers index items**; the token goes *outside* the word (`**p** - push`, not
+  `(p)ush`); every question states its default; the default never destroys; at
+  most one clarifying re-ask, then take the default and say so; accept any
+  answer form.
+- **Phase 0** distinguishes wording about *the wrap* (`"drop the rest"` - picks
+  a branch) from wording about *the work* (`"let's stop there"` - does not).
+  That distinction is the actual content of finding #1: the Run 8 session read
+  a work-ending phrase as a fork answer.
+- **Phase 2a** surfaces memory candidates as a **numbered** list, default **save
+  all**, answered by exception (*"drop 3 and 5"*).
+- **Phase 3d** renders the five options in the new form with `l` (change
+  nothing) as the stated default, and may never fall through to a commit.
+- `references/fast-mode.md` now states the interactive defaults alongside the
+  fast-mode actions, since they must move together. They already agreed.
+
+**Why not keep the widget for the memory batch** (the one place it was missed):
+its schema caps a question at **2-4 options**, and a memory batch is routinely
+5-8 items. It could never have served that case. It also has documented ways to
+hang a session outright with no timeout and no fallback - on this platform,
+specifically when the CLI is started with a prompt argument, which is exactly
+how the harness invokes it.
+
+### Results
+
+| # | Scenario | Status | Notes |
+|---|---|---|---|
+| 15 | Phase 0 fork (reworded, genuinely open) | **Pass** | Fork asked with all three options in the new rendering. Turn 1 closed with *"If your answer doesn't map to one of these, I'll take **w** after one clarifying re-ask"* - principle 8's default and re-ask rules surfacing verbatim, unprompted. `HANDOFF.md` written with concrete content and named in the summary. |
+| 21 | Phase 0 fork, pre-answered (NEW) | **Partial** | Fork correctly *not* re-asked; branch honored; items recorded. The up-front announcement did not land - see below. |
+| 2 | Dirty + unpushed | **Pass** | New 3d rendering, five options, `l` marked default. |
+| 20 | Multi-repo Phase 0 fork | **Pass** | Unchanged behaviour under the new rendering, 4 turns instead of 6. |
+
+### The announcement rule did not bind - 0 of 3
+
+Finding #1's fix was written twice - first as *"say so in that same message,
+before Phase 1 starts"*, then reframed as an ordering constraint (*"before wrap
+performs its first action... collapsing Phases 0-3 into one message changes
+nothing"*), mirroring the extract-first rule in principle 5, which has held
+under test since Run 6. Neither bound. All three runs stated the branch
+correctly and in the right terms - *"Dropped (per your instruction, Phase 0
+branch 'd')"* - but in the **Phase 4 summary**, after the commit landed.
+
+The likely reason: on the drop branch there is no artifact and no decision left,
+so the natural place to record a non-action is the summary, and principle 9
+actively discourages padding the opening with items the user has already
+dismissed.
+
+**Severity revised down.** Run 8 graded this as a defect on the strength of "an
+unannounced branch is indistinguishable from Phase 0 being skipped." That
+argument holds for a branch *inferred* from ambiguous wording - but the Phase 0
+wording rule above now routes those to the fork question instead. What remains
+is a reporting lag on a choice the user made explicitly seconds earlier. It is
+recorded as a soft criterion in scenario 21 and reported by the harness as a
+NOTE, not a FAIL, with the reasoning in both places. Promote it back if a
+mechanism is found that actually lands it; do not simply write the rule a third
+time.
+
+### Harness findings - two more, same family as Run 8's
+
+Both were mine, both changed what the scenarios measured, and both are
+regression-tested against the exact traces that exposed them:
+
+**Harness finding 5 - the parser read raw stream-json**, where an answer is one physical line
+   with newlines escaped. A greedy match ran through every option into the next
+   and returned whichever letter came first - answering **f** (finish first) to
+   a fork meant to hand off. The session exited wrap, then spent five turns
+   writing tests and installing Vitest. **That single misdriven run cost $2.95**,
+   more than the four priority scenarios of Run 8 combined.
+**Harness finding 6 - preference matching read the whole option description.** Option **p**'s
+   description read *"commit it, then push both commits (this handoff commit +
+   ...)"*, so the word "handoff" in the *push* option won the fork preference
+   and pushed a fixture meant to test commit-only. Matching is now against the
+   label head only - the text before the first `:`.
+
+### Eval-environment contamination (new, unresolved)
+
+Prompted by the user asking whether a stray `<progress-beacon>` block in a
+fixture summary meant other skills were leaking in. Checked rather than assumed:
+
+- **Only wrap is ever invoked** - 15 `Skill` calls across every trace, all
+  `{"skill":"wrap"}`. The beacon was the model imitating a format it saw in the
+  skills *listing*; that skill's hook fired in 0 traces.
+- **But the operator's `SessionStart` hook fires inside every fixture session**
+  and injects the full `using-superpowers` text - including *"if you think there
+  is even a 1% chance a skill might apply, you ABSOLUTELY MUST invoke the
+  skill"* - into all 18 traces.
+
+No Run 8 row is invalidated: every scenario types `/wrap` deliberately, so what
+is measured is the skill's content, not whether it gets picked up. But there is
+**no control run**, and no measurement of wrap as a third party would install
+it - standalone, with none of this environment. `--setting-sources` (which
+selects among user/project/local settings) and a scratch `CLAUDE_CONFIG_DIR`
+are the two candidate levers for a clean-room mode. Open item #10.
+
 ## Run 8 - 2026-08-05 (prose-ask re-baseline, priority scenarios)
 
 First results against the prose-ask skill. Source HEAD `7d34830`, installed copy
@@ -415,6 +517,29 @@ Phase 0 was added as an Outstanding-asks check (fork: finish-first / wrap-with-h
 - ~~**3. Re-run scenario 10 with project-tracker registered.**~~ Both arms run and compared: `mcp_servers` carrying a connected project-tracker versus `mcp_servers: []` (via `--strict-mcp-config`, cleaner than the `--settings '{"mcpServers":{}}'` recipe this item proposed). Findings, the five-option menu, the executed commit, and the Phase 4 summary all match. Strongest form of the result: the *present* arm never called a project-tracker tool anyway, reaching for plain git either way. Evidence: [run8-10-project-tracker.md](docs/evidence/run8-10-project-tracker.md). The harness passes the absent arm's flag through `WRAP_AUDIT_CLAUDE_ARGS`.
 
 ### Open
+
+#### 10. Clean-room mode - measure the skill, not the operator's environment
+
+Every scenario to date runs inside the operator's own agent configuration. The
+`SessionStart` hook injects the full `using-superpowers` text into all 18 Run 8
+traces, and the system prompt lists roughly forty installed skills. A third
+party who installs wrap on its own gets neither, so nothing measured so far
+describes wrap standalone.
+
+Two candidate levers, neither tried: `--setting-sources` (choose among
+`user,project,local`, so user-level hooks can be excluded) and a scratch
+`CLAUDE_CONFIG_DIR` holding only wrap. The second is the more complete
+isolation - it would relocate the skills directory, the settings, and the memory
+root in one move, which incidentally retires the pollution risk that
+`tests/README.md` currently documents as accepted.
+
+Worth a **control run** too: the same fixture with no wrap installed at all,
+to establish what the model does unaided. Several Run 8 passes (correct sentinel
+discipline, refusing to guess between options) may be model behaviour rather
+than skill behaviour, and there is currently no way to tell.
+
+**Effort:** medium. Do it before treating any pass rate as a property of the
+skill.
 
 #### 8a. Test prompts may still be too leading
 

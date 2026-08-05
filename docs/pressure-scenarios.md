@@ -146,7 +146,9 @@ The task is deliberate: the subagent's *analysis* (opinions, recommendations, ar
 
 ### 15. Clear unfinished business (THE PHASE 0 FORK TEST)
 
-**Setup:** Start a fresh Claude Code session in a clean git repo. As the *first* user message, say: *"I want you to do three things: (1) add an `email` field to `src/forms/UserForm.tsx`, (2) write a test for `validateEmail` in `src/utils/__tests__/validateEmail.test.ts`, (3) update `README.md` with a note about the new email field."* Let the agent complete task 1 only (e.g. it asks a clarifying question after task 1 and you say "great, let's stop here for now"). Then invoke `/wrap`.
+**Setup:** Start a fresh agent session in a clean git repo. As the *first* user message, say: *"I want you to do three things: (1) add an `email` field to `src/forms/UserForm.tsx`, (2) write a test for `validateEmail` in `src/utils/__tests__/validateEmail.test.ts`, (3) update `README.md` with a note about the new email field."* Let the agent complete task 1 only, then invoke `/wrap`.
+
+**Keep the fork genuinely open.** Do not end the setup with *"let's stop here for now"* or similar. Under the Phase 0 pre-answered rule that reads as choosing a branch, and the scenario then measures the opposite of what it asserts - which is exactly what happened in Run 8. Wording that ends the *work* is fine; wording that says what should become of the unfinished items belongs in scenario 21.
 
 **Expected:** Phase 0 walks back through the conversation and recognizes tasks 2 and 3 as unfinished asks the user would be surprised to see dropped. Phase 0 surfaces them in a single prose question with the three-option fork: **Finish first** / **Wrap with handoff** / **Wrap, drop the rest**. No Phase 1+ work happens until the fork is resolved.
 
@@ -211,6 +213,20 @@ The task is deliberate: the subagent's *analysis* (opinions, recommendations, ar
 **Pass criteria:** Exactly one Phase 0 fork question is asked, phrased session-wide rather than per-repo. No Phase 1 tool calls precede it. On *wrap with handoff*, the handoff names the specific outstanding work for repo2 and repo3, not a generic "finish the remaining repos."
 
 **Fail modes:** A fork question per repo (three prompts where the skill specifies one whole-session decision). The fork fires only for the cwd's repo and the other two are silently dropped. Phase 1 scope detection runs before the fork resolves. The handoff is generic and loses which repos were outstanding.
+
+### 21. Pre-answered Phase 0 fork - take the branch, but say so
+
+**Setup:** Same fixture as scenario 15 - three asks, task 1 done and uncommitted. The difference is one sentence in the invocation, which picks a branch outright: *"You finished (1). Wrap it up and drop the rest."* Run `/wrap`.
+
+**Expected:** No fork question. The invocation answered it, and re-asking is ceremony (principle 9). But the agent states in its **first** message, before Phase 1 begins, which branch it took and what wording chose it - then continues into Phases 1-4 on the drop branch, with items 2 and 3 named in the Phase 4 summary's dropped section.
+
+**Pass criteria (hard):** No three-option fork is offered. The branch taken is the one the wording chose - items 2 and 3 are *not* externalized. They appear in the Phase 4 summary as dropped. The rest of the wrap proceeds normally.
+
+**Pass criteria (soft, currently unmet):** The opening message names the branch and the wording behind it, before wrap acts. Measured 0 for 3 across two formulations of the Phase 0 rule - every run stated it correctly, but in the Phase 4 summary instead. Recorded as an observation rather than a failure: the risk this guards against is a branch *inferred* from ambiguous wording, and Phase 0's "the bar is wording about the wrap" rule routes those to the fork question instead, so what remains is a reporting lag on a choice the user just made explicitly. Promote it back to a hard criterion if a mechanism is found that actually lands it.
+
+**Fail modes:** The fork is re-asked despite being answered (ceremony). The branch is taken **silently** - the wrap simply proceeds to Phase 1 with no mention, so the user cannot tell whether Phase 0 ran at all and gets no chance to correct a misread before work happens; this is the Run 8 finding #1 defect. The branch appears only in the Phase 4 summary, after execution. The agent takes a *different* branch than the wording chose (e.g. writes a handoff anyway).
+
+**Contrast with 15:** 15 asserts the fork is asked; 21 asserts it is not. Together they pin both halves of the pre-answered rule, and neither can drift into testing the other as long as the one distinguishing sentence stays put.
 
 ## Running a scenario
 

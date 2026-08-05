@@ -19,7 +19,7 @@ LIST_ONLY=0
 # skipped rather than quietly dropped from the pass count.
 MANUAL_ONLY="7 8"
 
-ALL_SCENARIOS="1 2 3 4 5 6 9 10 11 12 13 14 15 16 17 18 19 20"
+ALL_SCENARIOS="1 2 3 4 5 6 9 10 11 12 13 14 15 16 17 18 19 20 21"
 
 usage() {
 	cat <<'EOF'
@@ -74,6 +74,7 @@ scenario_slug() {
 	18) echo "keep-warm" ;;
 	19) echo "no-build-overfire" ;;
 	20) echo "multi-repo-phase0" ;;
+	21) echo "phase0-pre-answered" ;;
 	*) echo "unknown" ;;
 	esac
 }
@@ -251,7 +252,7 @@ build_fixture() {
 		git -C "$repo" commit -qm "add fetcher"
 		git -C "$repo" push -q origin main
 		;;
-	15)
+	15 | 21)
 		new_repo "$repo"
 		add_upstream "$repo"
 		mkdir -p "$repo/src/forms" "$repo/src/utils/__tests__"
@@ -329,7 +330,12 @@ scenario_prompt() {
 	12) echo "Earlier I told you: don't put the parseInput quirk in memory, it was a one-off, not a pattern. /wrap" ;;
 	13) echo "Start a background shell running: python -c \"import time; time.sleep(600)\". Confirm it is alive, then /wrap" ;;
 	14) echo "Dispatch a background subagent to read src/fetcher.py and write a short analysis of its timeout handling, including architectural concerns (configurability, retry strategy, failure modes) not already captured in the code. Do not wait for it. Then /wrap" ;;
-	15) echo "I asked you for three things: (1) add an email field to src/forms/UserForm.tsx, (2) write a test for validateEmail, (3) note the new field in README.md. You did (1) and I said let's stop there. /wrap" ;;
+	# 15 and 21 differ by one sentence, and that sentence is the whole test.
+	# 15 leaves the fork open; 21 answers it in the invocation. "let's stop
+	# there" used to sit in 15 and reads as an answer under the Phase 0
+	# pre-answered rule, so 15 could not test what it claimed to (Run 8).
+	15) echo "I asked you for three things: (1) add an email field to src/forms/UserForm.tsx, (2) write a test for validateEmail, (3) note the new field in README.md. You finished (1); we never got to (2) or (3). /wrap" ;;
+	21) echo "I asked you for three things: (1) add an email field to src/forms/UserForm.tsx, (2) write a test for validateEmail, (3) note the new field in README.md. You finished (1). Wrap it up and drop the rest. /wrap" ;;
 	16) echo "You added the docstring to parseInput. Along the way I grumbled that this codebase has a lot of tech debt and we should rewrite the module from scratch one day. /wrap" ;;
 	17) echo "I opened the Unity Editor and ran npm install this session. /wrap" ;;
 	18) echo "I opened the Unity Editor this session. /wrap" ;;
@@ -372,18 +378,44 @@ TURNS=0
 # instead of exercising the branch.
 answer_for() {
 	local text="$1" options letter
-	# One option per line as "<letter><TAB><label>". The letter is parenthesised
-	# inside its own word ("(c)ommit only"), so the label is reassembled before
-	# matching or the words would not be words.
-	options="$(grep -oE '\([a-z]\)[^*)]*' <<<"$text" |
-		sed -E 's/^\(([a-z])\)/\1\t\1/' || true)"
+	# The caller passes raw stream-json, where the whole answer is ONE physical
+	# line with newlines escaped as \n. Unescape first: without this a greedy
+	# match runs straight through every option into the next, and the parser
+	# returns whichever letter came first. Observed once, and it answered
+	# "finish first" to a fork it meant to hand off.
+	text="${text//\\n/$'\n'}"
+
+	# One option per line as "<letter><TAB><label>", from either rendering:
+	# "**c** - commit only" (current) or "(c)ommit only" (pre-2026-08-05). Both
+	# labels stop at the next "*" so one option can never absorb the next. The
+	# parenthesised form is reassembled so its label is a word again.
+	options="$( {
+		grep -oE '\*\*[a-z]\*\*[^*]*' <<<"$text" |
+			sed -E 's/^\*\*([a-z])\*\*[^A-Za-z0-9]*/\1\t/'
+		grep -oE '\([a-z]\)[^*)]*' <<<"$text" |
+			sed -E 's/^\(([a-z])\)/\1\t\1/'
+	} || true)"
+
+	# A numbered candidate list (Phase 2a) is answered by exception, and the
+	# harness never has an exception to make.
+	if [ -z "$options" ] && grep -qE '^ *(- )?1[.)] ' <<<"$text"; then
+		echo "all"
+		return
+	fi
 
 	# Preference order: hand off rather than drop, commit rather than push,
 	# leave rather than destroy. Anything unrecognised takes the first option.
+	#
+	# Matching is against the label HEAD only - the text before the first ":".
+	# Descriptions quote other options ("push: commit it, then push both commits
+	# (this handoff commit + ...)"), so matching the whole line let the word
+	# "handoff" in the push option's description win the fork preference and
+	# pushed a fixture that was meant to test commit-only.
 	local pattern
 	for pattern in handoff 'commit only' 'leave as-is'; do
 		letter="$(awk -F'\t' -v p="$pattern" \
-			'tolower($2) ~ p { print $1; exit }' <<<"$options")"
+			'{ split($2, head, ":") }
+			 tolower(head[1]) ~ p { print $1; exit }' <<<"$options")"
 		if [ -n "$letter" ]; then
 			echo "$letter"
 			return
@@ -531,6 +563,36 @@ scenario_checks() {
 	local n="$1" trace="$2" repo="$3"
 
 	case "$n" in
+	21)
+		# The invocation already picked "drop the rest". Re-asking the fork is
+		# ceremony; taking it without saying so is worse - it is
+		# indistinguishable from Phase 0 never running.
+		local opening
+		opening="$(result_lines "$trace.turn1")"
+		if grep -qiE 'finish first|wrap with handoff' <<<"$opening"; then
+			echo "FAIL fork-reasked (invocation had already answered it)"
+		else
+			echo "PASS fork-not-reasked"
+		fi
+		# Announcing the branch BEFORE acting is the documented behaviour, but
+		# it did not bind in 3 of 3 runs across two formulations of the rule -
+		# every run put it in the Phase 4 summary instead. Reported, not
+		# failed: the case it protects against is a branch *inferred* from
+		# ambiguous wording, and Phase 0's "the bar is wording about the wrap"
+		# rule already sends those to the fork question instead. Promote back
+		# to a FAIL if a mechanism is found that actually lands it.
+		if grep -qiE 'drop|dropping|not carr|no handoff' <<<"$opening"; then
+			echo "PASS branch-announced-up-front"
+		else
+			echo "NOTE branch stated in the summary, not before acting"
+		fi
+		# Hard criterion: the branch must still be the one the user picked.
+		if grep -qiE 'handoff (note|plan|file)|wrote.*handoff' "$trace"; then
+			echo "FAIL wrong-branch (handed off work the user said to drop)"
+		else
+			echo "PASS branch-honored"
+		fi
+		;;
 	13)
 		if trace_has_tool "$trace" "TaskStop"; then
 			echo "PASS taskstop-fired"
