@@ -67,7 +67,13 @@ even a 1% chance a skill might apply, you ABSOLUTELY MUST invoke the skill"*.
 Someone who installs wrap on its own gets none of that, so compliance measured
 this way may be the environment talking.
 
-`-c` runs the same scenarios with the operator stripped out:
+`-c` runs the same scenarios with the operator stripped out. The room itself is
+built by `scripts/clean-room.sh` in the **skills-dev umbrella**, shared with
+every other skill's harness, so `-c` and `-C` require this repo to be checked
+out as a submodule of skills-dev; the default mode has no such requirement.
+That is deliberate - `tests/` is dev-only content the installer never ships,
+and each trap the library handles fails silently rather than loudly, so one
+audited copy beats a copy per skill.
 
 | lever | what it removes |
 | --- | --- |

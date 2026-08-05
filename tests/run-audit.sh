@@ -144,67 +144,47 @@ REQUESTED="$*"
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 MODE_ARGS=()
 PLUGIN_DIR=""
-PLUGIN_NS=""
 
-# A native claude.exe cannot resolve the POSIX paths git-bash deals in, so paths
-# handed to it - or compared against ones it reports - go through here first.
-# Off Windows there is nothing to convert and cygpath does not exist.
+# The clean room itself is shared plumbing, owned by the skills-dev umbrella:
+# every skill needs the same isolation, and each of its traps fails silently
+# rather than loudly. That makes this harness umbrella-only, which is fine -
+# tests/ is dev-only content the installer never ships.
+CLEAN_ROOM_LIB="$REPO_ROOT/../scripts/clean-room.sh"
+if [ "$MODE" != "installed" ]; then
+	[ -f "$CLEAN_ROOM_LIB" ] || {
+		echo "error: clean-room modes need $CLEAN_ROOM_LIB, which ships with the" >&2
+		echo "       skills-dev umbrella. Run this from a checkout of skills-dev" >&2
+		echo "       with this skill as a submodule, or use the default mode." >&2
+		exit 2
+	}
+	# shellcheck source=/dev/null
+	. "$CLEAN_ROOM_LIB"
+fi
+
 canonical_path() {
-	if command -v cygpath >/dev/null 2>&1; then
+	if declare -F clean_room_canonical_path >/dev/null 2>&1; then
+		clean_room_canonical_path "$1"
+	elif command -v cygpath >/dev/null 2>&1; then
 		cygpath -m "$1" 2>/dev/null || printf '%s' "$1"
 	else
 		printf '%s' "$1"
 	fi
 }
 
-under_home() {
-	local path home
-	path="$(canonical_path "$1" | tr '[:upper:]' '[:lower:]')"
-	home="$(canonical_path "$HOME" | tr '[:upper:]' '[:lower:]')"
-	case "$path/" in "$home"/*) return 0 ;; esac
-	return 1
-}
-
 if [ "$MODE" != "installed" ]; then
-	MODE_ARGS=(--setting-sources project --strict-mcp-config)
-
-	# Memory files are found by walking from the session's cwd up to $HOME, so a
-	# fixture anywhere under home inherits the operator's home-level CLAUDE.md and
-	# AGENTS.md - and on Windows the default mktemp root (%TEMP%) is under home.
-	# Verified with one probe run from each side: from a temp dir under home it
-	# knew the operator's private conventions, from C:/wrap-audit it did not. No
-	# config-dir choice fixes this, because the leak comes in through the cwd.
-	if under_home "$OUTDIR"; then
-		echo "error: clean-room fixtures cannot live under $HOME - memory files" >&2
-		echo "       there reach the session through cwd discovery." >&2
-		echo "       Re-run with -o pointing somewhere outside home." >&2
-		exit 2
-	fi
+	clean_room_require_outside_home "$OUTDIR"
 
 	if [ -n "${WRAP_AUDIT_CONFIG_DIR:-}" ]; then
-		# git-bash hands a POSIX path straight to a native .exe, which cannot
-		# resolve it. The CLI does not complain: it silently uses an empty config
-		# and every turn dies with "Not logged in - Please run /login".
-		CONFIG_DIR="$(canonical_path "$WRAP_AUDIT_CONFIG_DIR")"
-		export CLAUDE_CONFIG_DIR="$CONFIG_DIR"
-		SESSIONS_ROOT_OVERRIDE="$CONFIG_DIR/projects"
+		SESSIONS_ROOT_OVERRIDE="$(clean_room_use_config_dir "$WRAP_AUDIT_CONFIG_DIR")"
 	fi
-fi
 
-if [ "$MODE" = "clean" ]; then
-	# --plugin-dir takes the checkout itself. A directory holding a SKILL.md
-	# with no skills/ subdirectory loads as a single-skill plugin (Claude Code
-	# >= 2.1.142), so there is nothing to assemble first.
-	PLUGIN_DIR="$(canonical_path "${WRAP_AUDIT_PLUGIN_DIR:-$REPO_ROOT}")"
-	[ -f "$PLUGIN_DIR/SKILL.md" ] || {
-		echo "error: no SKILL.md at $PLUGIN_DIR" >&2
-		exit 1
-	}
-	# The namespace is the plugin directory's basename, and the invocation token
-	# is built from it below. Deriving it beats hardcoding `wrap`: a mismatch
-	# does not error, it silently resolves to nothing (see adapt_prompt).
-	PLUGIN_NS="$(basename "$PLUGIN_DIR")"
-	MODE_ARGS+=(--plugin-dir "$PLUGIN_DIR")
+	if [ "$MODE" = "clean" ]; then
+		PLUGIN_DIR="$(canonical_path "${WRAP_AUDIT_PLUGIN_DIR:-$REPO_ROOT}")"
+		clean_room_build_args clean "$PLUGIN_DIR"
+	else
+		clean_room_build_args control
+	fi
+	MODE_ARGS=("${CLEAN_ROOM_ARGS[@]}")
 fi
 
 # ---------------------------------------------------------------------------
@@ -475,7 +455,7 @@ scenario_prompt() {
 adapt_prompt() {
 	local prompt="$1"
 	case "$MODE" in
-	clean) printf '%s' "${prompt//"/wrap"/"/$PLUGIN_NS:wrap"}" ;;
+	clean) clean_room_invocation "$prompt" ;;
 	control) printf '%s' "${prompt//"/wrap"/"Let's wrap up the session."}" ;;
 	*) printf '%s' "$prompt" ;;
 	esac
@@ -849,7 +829,7 @@ echo "wrap audit: model=$MODEL outdir=$OUTDIR mode=$MODE"
 case "$MODE" in
 clean)
 	echo "clean room: wrap from $PLUGIN_DIR (this checkout, NOT what you installed)"
-	echo "clean room: invoked as /$PLUGIN_NS:wrap"
+	echo "clean room: invoked as /$CLEAN_ROOM_NS:$CLEAN_ROOM_SKILL"
 	;;
 control)
 	echo "control: no wrap installed - these runs show the model unaided, and"
