@@ -16,7 +16,7 @@ If any fire, prints a single-line reminder. Otherwise prints nothing.
 
 A marker file at `~/.agents/wrap/nudge-last-fired`. If the hook fired within the last 5 minutes, the hook skips entirely (prevents noise during quick-exit-restart cycles). On each non-skipped run, the hook touches the marker.
 
-**Wrap itself does not read or write this file.** Full decoupling — the skill and the hook know nothing about each other.
+**Wrap itself does not read or write this file.** Full decoupling - the skill and the hook know nothing about each other.
 
 ## Output format
 
@@ -30,7 +30,7 @@ If no signals fire, the hook prints nothing. Silent is valid.
 
 ## Scope caveat
 
-The hook sees only the session's final `cwd`. If the session touched multiple repos but exited from a third, the hook only reports that third. This is acceptable because the hook is a nudge, not a checklist — the user knows what they touched.
+The hook sees only the session's final `cwd`. If the session touched multiple repos but exited from a third, the hook only reports that third. This is acceptable because the hook is a nudge, not a checklist - the user knows what they touched.
 
 ## Registering the hook
 
@@ -84,7 +84,7 @@ Use the `update-config` skill to perform the registration rather than hand-editi
 
 Don't paste the manual-install snippet into a plugin's `hooks.json` (a literal `~/.claude/skills/wrap/...` path breaks the moment the plugin version bumps) or the plugin snippet into a hand-edited `settings.json` (`${CLAUDE_PLUGIN_ROOT}` has no meaning there).
 
-Note the manifest is the **plugin author's** responsibility, not the installing user's: `hooks/hooks.json` lives at the plugin root and Claude Code auto-loads it when the plugin is enabled — a skill directory inside a plugin cannot self-register its hooks. If a plugin bundles this skill without shipping that manifest, the hook simply never fires until the user wires it manually via the manual-install path above.
+Note the manifest is the **plugin author's** responsibility, not the installing user's: `hooks/hooks.json` lives at the plugin root and Claude Code auto-loads it when the plugin is enabled - a skill directory inside a plugin cannot self-register its hooks. If a plugin bundles this skill without shipping that manifest, the hook simply never fires until the user wires it manually via the manual-install path above.
 
 ## What the hook must NOT do
 

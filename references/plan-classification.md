@@ -63,7 +63,7 @@ If the loose-thread extraction is rejected or fails, the source plan stays. Skip
 | **Completed + tracked in git** | Delete outright (`rm` + commit). Git history preserves the file for recovery. |
 | **Completed + untracked** | Ask with bias-to-delete. Show path + first few lines + "delete? [Y/n]". |
 | **Superseded** | Delete. Commit message notes which plan superseded it. |
-| **Abandoned** | Archive — move to `<plan-dir>/archive/` (create if needed), not delete. Add a one-line note to the file's frontmatter: `status: abandoned, YYYY-MM-DD`. |
+| **Abandoned** | Archive - move to `<plan-dir>/archive/` (create if needed), not delete. Add a one-line note to the file's frontmatter: `status: abandoned, YYYY-MM-DD`. |
 | **In progress** | Keep untouched. Optionally add a status frontmatter tag if the plan doesn't already have one. |
 | **Draft / not started** | Keep. This is intentional deferral, not cruft. |
 
@@ -71,9 +71,9 @@ If the loose-thread extraction is rejected or fails, the source plan stays. Skip
 
 Two failure modes are likely to bite an agent following the rules above. Both have been observed in real wrap runs of this skill.
 
-### Mistake 1: "this completed plan is documentation-grade — let's keep it"
+### Mistake 1: "this completed plan is documentation-grade - let's keep it"
 
-**No.** A plan file that captures how a feature was built is not the same as documentation that describes the feature. Documentation lives in dedicated docs (READMEs, AGENTS.md, code comments, `docs/*.md`). Plans live in plan files. After implementation, the plan is either redundant (if work followed it) or wrong (if work diverged) — either way, delete it. Git history preserves the plan for any future archaeology.
+**No.** A plan file that captures how a feature was built is not the same as documentation that describes the feature. Documentation lives in dedicated docs (READMEs, AGENTS.md, code comments, `docs/*.md`). Plans live in plan files. After implementation, the plan is either redundant (if work followed it) or wrong (if work diverged) - either way, delete it. Git history preserves the plan for any future archaeology.
 
 **This applies even when:**
 
@@ -84,11 +84,11 @@ Two failure modes are likely to bite an agent following the rules above. Both ha
 
 If those things are valuable, **move the valuable content to its proper home first**, then delete the plan. A README section, an `AGENTS.md` note, or an ADR file is the right destination. The plan file is not.
 
-The "Completed + tracked → delete outright" rule in the table above is correct as written. Trust it. Do not propose alternative actions like "keep as documentation" or "archive instead" for completed plans — those are unjustified conservative-instinct overrides.
+The "Completed + tracked → delete outright" rule in the table above is correct as written. Trust it. Do not propose alternative actions like "keep as documentation" or "archive instead" for completed plans - those are unjustified conservative-instinct overrides.
 
 ### Mistake 2: "this abandoned plan is so old, let's just delete it"
 
-**No.** Age is not a promotion from Abandoned to Completed. *Abandoned* means the work was never finished and won't be finished — that is a different state from Completed, and it gets a different action (archive, not delete).
+**No.** Age is not a promotion from Abandoned to Completed. *Abandoned* means the work was never finished and won't be finished - that is a different state from Completed, and it gets a different action (archive, not delete).
 
 An abandoned plan may contain decisions and context that nobody has migrated elsewhere. The wrapping agent does not know whether the user might want to revisit it. Archiving keeps it discoverable; deleting gambles that no one will ever want it back.
 
@@ -96,4 +96,4 @@ Even a plan from 14 months ago with no commits tying back to it is **Abandoned, 
 
 ### Symmetry
 
-These two mistakes are mirror images of the same cognitive error: the agent overrides the spec because it *feels* like the right call. Both directions are wrong. The classification states have distinct actions for a reason — apply them as written.
+These two mistakes are mirror images of the same cognitive error: the agent overrides the spec because it *feels* like the right call. Both directions are wrong. The classification states have distinct actions for a reason - apply them as written.

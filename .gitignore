@@ -1,6 +1,9 @@
 # Eval workspace (generated locally, never shipped)
 workspace/
 
+# Generated plugin tree (scripts/build-plugin.sh)
+build/
+
 # Python
 __pycache__/
 *.pyc
@@ -10,6 +13,7 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
-# aislop tool state (session artifacts); keep only the shared settings file
-.aislop/*
-!.aislop/settings.json
+# aislop tool state (session artifacts); keep only the shared settings file.
+# Unanchored so nested dirs (tests/.aislop/) are covered too.
+**/.aislop/*
+!**/.aislop/settings.json

@@ -1,0 +1,4 @@
+# Extra top-level entries to install beyond the baseline.
+# Without this, the installer never ships the session-end nudge scripts that
+# README's install step tells the user to register.
+hooks/

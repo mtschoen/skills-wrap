@@ -32,26 +32,28 @@ The session-closing ritual for a coding agent session. Performs two equally-mand
 
 6. **Stateless.** Wrap maintains no durable record of its own runs. Each invocation asks "what's true right now" and acts accordingly. Running `/wrap` twice in a row is safe - the second run finds nothing the first one already cleaned.
 
-7. **Verify before delete.** Every finding surfaces with evidence, a recommendation, a confidence level, and the exact action on approval. The user approves batches via `AskUserQuestion`, not per-item unless explicitly described otherwise below.
+7. **Verify before delete.** Every finding surfaces with evidence, a recommendation, a confidence level, and the exact action on approval. The user approves a batch of findings at once, not item-by-item, unless explicitly described otherwise below.
 
-8. **No items, no ceremony.** Each phase only runs its `AskUserQuestion` batch when its research has surfaced actual candidates. If a phase finds nothing, skip the prompt and continue. If *all* phases find nothing - including Phase 1's scope detection landing on a fully clean state - go straight to Phase 4 with a terse "nothing to wrap" summary. **Do not invent items out of nothing just to have something to do.** That is an explicit failure mode (see scenario 1 in `docs/pressure-scenarios.md`). Empty sweeps are a pass condition, not a problem to work around. Idempotent re-runs and clean-state invocations both look the same: detect nothing, summarize nothing, exit.
+8. **Ask in prose, one question at a time.** Write wrap's questions in your own message text, with lettered choices where there are choices - `(p)ush / (c)ommit only / (s)tash / (l)eave as-is / (b)ranch-off`. Do **not** route them through a structured question widget (`AskUserQuestion` or a platform equivalent): its answer slots are capped below what Phase 3d needs, stacked questions are tedious to answer, and non-interactive harnesses auto-decline it - which turned most past pressure-test runs into "declined" results instead of evidence. Batch *findings* into one question freely (principle 7); do not stack *questions*.
 
-9. **Orchestrator retains override authority.** Parts of Phase 3 fan out to per-repo sonnet subagents to keep verbose tool output (file reads, status walls, plan-file contents) out of main context. The orchestrator (this conversation) is still in charge: it may at any time read repo contents directly, bypass a subagent's draft, or pull per-repo work back into main context if subagent output feels thin, suspicious, or incomplete. Subagents are an optimization, not a delegation contract. The judgment-heavy work - deciding what's worth saving, reviewing drafts, assembling user-approval batches, writing the final summary - stays with the orchestrator.
+9. **No items, no ceremony.** Each phase only asks its question when its research has surfaced actual candidates. If a phase finds nothing, skip the question and continue. If *all* phases find nothing - including Phase 1's scope detection landing on a fully clean state - go straight to Phase 4 with a terse "nothing to wrap" summary. **Do not invent items out of nothing just to have something to do.** That is an explicit failure mode (see scenario 1 in `docs/pressure-scenarios.md`). Empty sweeps are a pass condition, not a problem to work around. Idempotent re-runs and clean-state invocations both look the same: detect nothing, summarize nothing, exit. A question the invocation itself already answered is ceremony too - see Phase 0.
+
+10. **Orchestrator retains override authority.** Parts of Phase 3 fan out to per-repo sonnet subagents to keep verbose tool output (file reads, status walls, plan-file contents) out of main context - *where the harness permits subagent dispatch at all* (see Phase 3's no-fan-out carve-out). The orchestrator (this conversation) is still in charge: it may at any time read repo contents directly, bypass a subagent's draft, or pull per-repo work back into main context if subagent output feels thin, suspicious, or incomplete. Subagents are an optimization, not a delegation contract. The judgment-heavy work - deciding what's worth saving, reviewing drafts, assembling the user-approval batch, writing the final summary - stays with the orchestrator.
 
 ## Fast mode (`--fast`)
 
-`/wrap --fast` runs the **same five phases in the same sequence**, but non-interactively: it skips every `AskUserQuestion` gate and performs **only safe, additive actions** automatically. Use it to externalize and tidy a session without sitting through approval batches when you don't plan to revisit this session.
+`/wrap --fast` runs the **same five phases in the same sequence**, but non-interactively: it skips every approval gate and performs **only safe, additive actions** automatically. Use it to externalize and tidy a session without sitting through approval batches when you don't plan to revisit this session.
 
 **Two hard invariants:**
 
-- **No questions.** Every `AskUserQuestion` batch in Phases 0–3 is skipped; each takes its fast-mode default from the table below. Fast mode never blocks on the user.
+- **No questions.** Every approval gate in Phases 0-3 is skipped; each takes its fast-mode default from the table below. Fast mode never blocks on the user.
 - **Safe actions only.** Fast mode **writes** (memory files, AGENTS.md edits, wrap's own hygiene commit) but never **destroys or moves** data: no file deletes, no archiving/moving plan files, no stashing, and no committing or pushing the user's pre-existing work. Every destructive or user-facing action is recorded in the Phase 4 summary as *deferred*, not performed.
 
 **Over-share, don't curate.** Because nobody is coming back to this session, lower the bar for what gets saved. When unsure whether a memory item is worth keeping, keep it. Fast mode deliberately trades a fatter memory footprint for zero lost context.
 
-**Don't deliberate.** With no destructive action to gate and no approval batch to assemble, the careful per-finding review (principle 9) collapses: extract loose threads, write them, move on. Take subagent findings at face value for the memory writes - there is nothing to delete that a wrong call would punish.
+**Don't deliberate.** With no destructive action to gate and no approval batch to assemble, the careful per-finding review (principle 10) collapses: extract loose threads, write them, move on. Take subagent findings at face value for the memory writes - there is nothing to delete that a wrong call would punish.
 
-The per-phase fast-mode defaults (what each `AskUserQuestion` gate resolves to) live in `references/fast-mode.md` - read it before running a `--fast` wrap.
+The per-phase fast-mode defaults (what each approval gate resolves to) live in `references/fast-mode.md` - read it before running a `--fast` wrap.
 
 A `--fast` run that finishes normally emits the **completed** closing sentinel; one the user interrupts emits the interrupted sentinel. Everything else in the Procedure below still applies - fast mode only changes how gates resolve, not the phase order or the failure-handling rules.
 
@@ -67,11 +69,13 @@ Before scoping or sweeping anything, scan the conversation for asks the user mad
 
 1. **Recall the user's asks.** Walk back through the session: what did the user ask for, what got done, what didn't, what got deferred? Read background-task output (e.g. via `TaskOutput`) for any subagent results that flagged unfinished items.
 2. **Filter to the meaningful ones.** Trivial side-asks the user themselves dropped don't count. The bar is *"would the user be surprised this got dropped?"*
-3. **If nothing meaningful is unfinished:** continue silently to Phase 1. Per principle 8, no ceremony.
-4. **If unfinished items exist:** present them as a single `AskUserQuestion` batch with three options:
+3. **If nothing meaningful is unfinished:** continue silently to Phase 1. Per principle 9, no ceremony.
+4. **If unfinished items exist:** list them in one message and ask, in prose, which of three ways to proceed:
    - **Finish first.** Exit wrap immediately. No scope detect, no commits, nothing to undo. Return control so the user can continue the work - they can re-invoke `/wrap` once they're done.
    - **Wrap with handoff.** Continue normally; the unfinished-asks list becomes a seed for Phase 3a memory offload - it gets externalized as a handoff plan file or memory entry rather than being lost.
    - **Wrap, drop the rest.** User decides the unfinished items aren't worth handing off. Continue normally; surface the dropped items in the Phase 4 summary so there's a record of what didn't make it.
+
+**Do not ask a fork the invocation already answered.** If the user's own wording picked a branch - *"/wrap with a handoff"*, *"wrap it up and drop the rest"*, *"I'll finish this bit first, wrap the rest"* - take that branch, state in one line which one you took and why, and move on. Re-asking a question the user has already answered is ceremony (principle 9). Ask only when the branch is genuinely open.
 
 ### Phase 1 - Detect scope
 
@@ -79,7 +83,7 @@ Determine which repos the session touched. The repo containing the cwd at the ti
 
 1. **Recall.** Review the conversation and list every path you edited, created, or ran git commands against. This is the primary source of truth for *additional* repos beyond the cwd.
 2. **Dirty-scan cross-check.** For each recalled path plus the cwd (and their parent repos), check whether the working tree is dirty or has unpushed commits. Use whatever dirty-detection tooling is available - if `project-tracker` MCP tools are present, use them; otherwise run `git status` and `git log @{u}..HEAD` directly.
-3. **Confirm with the user.** Present the detected repo list as a single batch via `AskUserQuestion`: *"I'll wrap these repos: [list]. Add or remove any?"*
+3. **Confirm with the user.** Present the detected repo list in one message and ask: *"I'll wrap these repos: [list]. Add or remove any?"*
 
 **Not in scope:** Repos the session only *read*, other than the cwd. Reading is not touching, but the cwd is treated as in-scope regardless of whether the session edited it.
 
@@ -94,7 +98,7 @@ Cross-cutting things not tied to any one project. Only done once per wrap, befor
 1. Review your conversation context (plus the on-disk session transcript, if your harness persists one, when your context has been compacted and you need to recover earlier content). Include recent output from any background shells or subagents (read via `TaskOutput` or the platform equivalent) - loose threads hiding in their output count, including output from tasks that completed during the session but whose results you never explicitly harvested.
 2. Walk the **cross-project categories** section of `references/categories.md` in order. For each category, ask yourself *"is there anything in this category from this session worth saving?"* and draft candidate items.
 3. Each draft item is a concrete: what to save, where to save it, and why.
-4. Surface the full set as a single `AskUserQuestion` batch. Let the user approve, edit, or reject the whole set.
+4. Surface the full set as one question. Let the user approve, edit, or reject the whole set.
 5. Execute the approved writes - create or update memory files, modify `MEMORY.md` index entries, etc.
 
 **Checklist-driven:** Walk every category even if you think it is empty. Quiet sessions should not silently skip memory offload.
@@ -115,17 +119,19 @@ Explicitly terminate anything this session started in the background before decl
 4. Active `Monitor` watchers - cancel each.
 5. **GUI applications running as session children** (e.g. a Unity Editor or browser launched via a backgrounded shell earlier in the session). These are children of the session process tree: they hold the session open at exit, and closing the session (or stopping their task) kills them - so "keep it open" is NOT a valid sweep outcome for a session-child app. If the user wants the app to survive the wrap, **relaunch it detached first** (Windows: the PowerShell tool's `Start-Process -FilePath <exe> -ArgumentList ...`; POSIX: `setsid`/`nohup ... & disown`), verify the new process is parented outside the session, and only then stop the original task. Observed 2026-07-06: an Editor "kept open" as a session child blocked `/exit` and then died when its task was stopped anyway - the exact both-worlds-lost outcome this item prevents.
 
-Surface the full set (running and recently-completed-but-unharvested) as a single `AskUserQuestion` batch with per-item context (what it is, how long it has been running or how recently it completed, last output line or final summary). If inspecting any surfaces a new loose thread, loop back and amend the 2a offload batch before terminating. Use the platform's task-stop tool (e.g. `TaskStop`, which currently handles background shells, subagents, AND named teammates uniformly - teammate names work as `task_id`) to terminate tasks; for named teammates, follow item 3's roster-verify-escalate protocol (polite `shutdown_request` first, per-name `TaskStop` for any agent that doesn't confirm). If nothing is running or unharvested, skip silently - per principle 8, no ceremony.
+Surface the full set (running and recently-completed-but-unharvested) as one question, with per-item context (what it is, how long it has been running or how recently it completed, last output line or final summary). If inspecting any surfaces a new loose thread, loop back and amend the 2a offload batch before terminating. Use the platform's task-stop tool (e.g. `TaskStop`, which currently handles background shells, subagents, AND named teammates uniformly - teammate names work as `task_id`) to terminate tasks; for named teammates, follow item 3's roster-verify-escalate protocol (polite `shutdown_request` first, per-name `TaskStop` for any agent that doesn't confirm). If nothing is running or unharvested, skip silently - per principle 9, no ceremony.
 
 This sweep does *not* terminate the wrap subagents dispatched in Phase 3; those are part of the wrap and finish on their own.
 
 ### Phase 3 - Per-repo work
 
-Phase 3 covers per-repo memory offload (3a), plans sweep (3b), hygiene pass (3c), and the per-repo commit/push prompt (3d). The orchestrator does 3a directly across all touched repos. 3b and 3c fan out to per-repo sonnet subagents (with a bucketing cap). The orchestrator reviews their findings, runs one combined `AskUserQuestion` batch, and either executes inline or dispatches sonnet executors. 3d returns to the orchestrator for the user-facing commit prompt.
+Phase 3 covers per-repo memory offload (3a), plans sweep (3b), hygiene pass (3c), and the per-repo commit/push prompt (3d). The orchestrator does 3a directly across all touched repos. 3b and 3c fan out to per-repo sonnet subagents (with a bucketing cap) *where the harness allows it*. The orchestrator reviews their findings, asks one combined approval question, and either executes inline or dispatches sonnet executors. 3d returns to the orchestrator for the user-facing commit prompt.
 
 **Per-repo independence rule:** if any sub-phase fails partway through a repo, record the failure in the running Phase 4 summary, skip remaining sub-phases for *that* repo (especially never push if commit failed), and continue to the next repo. Do not abort the whole wrap.
 
 **Skip-fan-out option:** If a repo's expected 3b/3c work is trivially small (e.g. one or two files, no plans, no scratch), the orchestrator may skip the subagent dispatch and do 3b/3c inline. Subagent dispatch has fixed first-turn cost; for tiny work it can exceed the savings. Use judgment.
+
+**No-fan-out harnesses.** Some harnesses forbid subagent dispatch outright - a standing instruction from the user or from the harness itself, a permission layer that denies the Agent tool, or a platform with no subagent primitive. Treat it exactly like the skip-fan-out option above: do 3b/3c inline for every repo, with the MUST-load rule below still in force. Don't ask permission to fan out and don't narrate the constraint - fan-out is a context-cost optimization, never a correctness requirement (principle 10).
 
 When taking the inline path, the orchestrator MUST still load the relevant references - `Read references/plan-classification.md` before doing 3b inline, and `Read references/hygiene-checklist.md` before doing 3c inline. The references contain the per-state action tables and the "Common mistakes to avoid" sections that per-repo subagents would otherwise load on their own; skipping the read recreates the conservative-keep drift those sections were added to prevent.
 
@@ -135,7 +141,7 @@ When taking the inline path, the orchestrator MUST still load the relevant refer
 
 For each repo in the Phase 1 list, walk the **per-project categories** section of `references/categories.md` and draft candidate items in the orchestrator's main context - project learnings, decisions, AGENTS.md updates, gotchas. This step has no verbose tool output: it is recall-driven drafting against the conversation context already loaded. Subagent isolation buys nothing here, and the nuance cost of fanning it out outweighs the savings.
 
-The 3a drafts are not yet executed or shown to the user. Hold them in working memory; they are combined with 3b/3c findings before the AskUserQuestion batch in the per-repo review step below. The drafts are also passed into each subagent's brief as cross-reference material so subagents don't duplicate them.
+The 3a drafts are not yet executed or shown to the user. Hold them in working memory; they are combined with 3b/3c findings before the approval question in the per-repo review step below. The drafts are also passed into each subagent's brief as cross-reference material so subagents don't duplicate them.
 
 **3b + 3c. Plans sweep + hygiene pass (per-repo subagents).**
 
@@ -159,9 +165,9 @@ For each subagent (per repo or per bucket), the prompt should include:
 - *"Is this finding actually worth surfacing, or is it noise?"* - drop noise.
 - *"Does this classification feel right given how the session actually went?"* - override if not.
 
-If a subagent's findings feel thin, generic, or wrong, the orchestrator may bypass them entirely (principle 9): read the repo directly, do 3b/3c inline for that repo, and produce its own findings. This is a first-class option, not an emergency escape.
+If a subagent's findings feel thin, generic, or wrong, the orchestrator may bypass them entirely (principle 10): read the repo directly, do 3b/3c inline for that repo, and produce its own findings. This is a first-class option, not an emergency escape.
 
-After review, combine 3a drafts + reviewed 3b/3c findings into one `AskUserQuestion` batch per repo (or batched across repos if total volume is small). Get approval.
+After review, combine 3a drafts + reviewed 3b/3c findings into one approval question per repo (or one covering several repos if total volume is small). Get approval.
 
 **Execution.** After approval, execution can stay in the orchestrator (small/single-repo cases) or fan back out to sonnet executor subagents (large or multi-repo cases). Executors receive the approved findings + their `action_on_approval` strings, and report what they actually did. Auto-commit (commit #1 in 3d) happens in the repo where the writes landed, regardless of who executed them.
 
@@ -190,7 +196,7 @@ The `Wrap-Session-Id:` trailer lets future tooling distinguish wrap commits from
 
 Rules for this prompt:
 
-- **All five options must be presented.** Do not drop options based on the agent's judgment of applicability - surface them and let the user decide. The user may have a use case the agent doesn't see (e.g., starting a branch off `main` for speculative follow-up work).
+- **All five options must be presented**, written out as lettered choices in the message text. Do not drop options based on the agent's judgment of applicability - surface them and let the user decide. The user may have a use case the agent doesn't see (e.g., starting a branch off `main` for speculative follow-up work). Prose asking (principle 8) is what makes five options possible: a four-slot question widget cannot carry them, and past runs quietly dropped `(b)ranch-off` to fit.
 - Never pick an option for the user.
 - Never push without the explicit `(p)ush` choice.
 - Never force-push. If the push is rejected as non-fast-forward, report "push rejected, commits stay local" and continue.
@@ -213,7 +219,7 @@ Spot-check before publishing: cross-reference subagent fragments against `git lo
 
 Keep the summary terse - specific numbers, specific paths, specific decisions. No filler.
 
-**Empty case:** If Phases 0–3 found nothing (clean state, idempotent re-run, or genuinely-quiet session), the entire summary is one or two lines: *"Nothing to wrap. \<repo names\> are clean, no memory items to offload, no background processes running."* Do not pad with bullet points for empty categories. Per principle 8, the empty path is a valid pass - emit it directly and exit.
+**Empty case:** If Phases 0–3 found nothing (clean state, idempotent re-run, or genuinely-quiet session), the entire summary is one or two lines: *"Nothing to wrap. \<repo names\> are clean, no memory items to offload, no background processes running."* Do not pad with bullet points for empty categories. Per principle 9, the empty path is a valid pass - emit it directly and exit.
 
 **Closing sentinel (mandatory, every path).** The very last line of the Phase 4 summary MUST be a sentinel marker. Which sentinel depends on whether the wrap ran to its natural end or was cancelled/interrupted partway:
 
@@ -221,7 +227,7 @@ Keep the summary terse - specific numbers, specific paths, specific decisions. N
 
   > That's a /wrap. Go ahead and close the session.
 
-- **Cancelled or interrupted wrap** (user stopped the wrap mid-procedure, denied a critical `AskUserQuestion`, or the wrap aborted before reaching Phase 4 on its own):
+- **Cancelled or interrupted wrap** (user stopped the wrap mid-procedure, refused a critical approval question, or the wrap aborted before reaching Phase 4 on its own):
 
   > That was an interrupted /wrap. The session is NOT in a clean wrap state - some items may still be dirty, uncommitted, or unsaved.
 
@@ -231,10 +237,10 @@ The two sentinels are distinct on purpose: the "go ahead and close" line is the 
 
 - **Phase independence:** failure in phase N leaves phases 1..N-1 intact and continues to phase N+1. Phase 4's summary records what completed and what didn't.
 - **Per-repo independence inside Phase 3:** repo-level failures are logged and wrap moves to the next repo.
-- **Subagent failure / timeout:** treat as "no findings for this bucket." The orchestrator may fall back to doing 3b/3c directly for the affected repos (principle 9), or skip with a note in the Phase 4 summary. Never silently lose a repo from the wrap.
+- **Subagent failure / timeout:** treat as "no findings for this bucket." The orchestrator may fall back to doing 3b/3c directly for the affected repos (principle 10), or skip with a note in the Phase 4 summary. Never silently lose a repo from the wrap.
 - **Subagent over-claim:** if Phase 4's spot-check finds a subagent reported a commit / write / deletion that didn't actually happen, correct the summary and execute the missing action inline if still appropriate.
 - **Destructive-action gate:** deletes and archives run only after memory offload succeeds for that repo.
-- **User cancel (`Ctrl+C` / stop / denied AskUserQuestion):** whatever was already approved + executed stays done. Print a "cancelled - completed: X / pending: Y" summary immediately, ending with the **interrupted sentinel** (see Phase 4) - never the "go ahead and close" line. Cancellation also stops any in-flight subagents - wrap does not leave wrap-spawned subagents running after the user cancels.
+- **User cancel (`Ctrl+C` / stop / a refused approval question):** whatever was already approved + executed stays done. Print a "cancelled - completed: X / pending: Y" summary immediately, ending with the **interrupted sentinel** (see Phase 4) - never the "go ahead and close" line. Cancellation also stops any in-flight subagents - wrap does not leave wrap-spawned subagents running after the user cancels.
 - **Git errors:**
   - Merge conflict on wrap's auto-commit → stash wrap's edits, leave user work alone, record the conflict in the summary.
   - Non-fast-forward push rejection → never force-push; report and continue.

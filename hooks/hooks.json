@@ -1,0 +1,15 @@
+{
+  "description": "Registers the decoupled session-end nudge. Prints at most one line about wrap-worthy state in the final cwd, then exits 0. It never invokes wrap - see references/session-end-reminder.md.",
+  "hooks": {
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/session-end-reminder.sh\""
+          }
+        ]
+      }
+    ]
+  }
+}

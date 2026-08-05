@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# find-unwrapped.sh — List recent agent sessions that did NOT end with /wrap.
+# find-unwrapped.sh - List recent agent sessions that did NOT end with /wrap.
 # Scans the agent's session transcripts (Claude Code: ~/.claude/projects).
 #
 # Heuristic: grep each session JSONL for any of:
@@ -20,7 +20,7 @@
 #   --since      2026-04-30   (earliest observed real /wrap invocation; the skill
 #                              existed since 2026-04-11 but routine adoption lagged
 #                              by ~3 weeks. Older default flagged the adoption-gap
-#                              window as "unwrapped" — false alarms.)
+#                              window as "unwrapped" - false alarms.)
 #   --min-bytes  50000        (skip short Q&A sessions)
 #   wrap-test*   excluded     (scratch test projects, not real work)
 #
@@ -103,7 +103,7 @@ mtime_epoch() {
 
 # Collect session IDs of actively running claude processes.
 # Stored as a space-delimited string (with leading/trailing spaces) so we can
-# membership-test via `case "$active_sessions" in *" $sid "*) ...` — works
+# membership-test via `case "$active_sessions" in *" $sid "*) ...` - works
 # under bash 3.2 (macOS default), which has no associative arrays.
 # `awk` extracts the --resume argument portably across GNU/BSD; `grep -oP` is
 # GNU-only and silently fails on macOS.
@@ -114,7 +114,7 @@ while IFS= read -r sid; do
 done < <(pgrep -a claude 2>/dev/null \
     | awk '{for (i = 1; i < NF; i++) if ($i == "--resume") print $(i + 1)}')
 # Current (non-resumed) session: find the most recently modified JSONL
-# whose mtime is within the last 120s — that's almost certainly active
+# whose mtime is within the last 120s - that's almost certainly active
 active_grace=120
 
 # Scan most recent N session files. `mapfile` is bash 4+, so we use a

@@ -1,4 +1,4 @@
-# wrap skill — SessionEnd reminder hook (Windows).
+# wrap skill - SessionEnd reminder hook (Windows).
 # Prints a one-line nudge if the current cwd has wrap-worthy state.
 # Rate-limited to once per 5 minutes via ~/.agents/wrap/nudge-last-fired.
 # Must exit 0 always. Never blocks or invokes wrap.

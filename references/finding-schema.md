@@ -15,7 +15,7 @@ Every finding surfaced by this skill (whether to the user or back to a fleet par
 }
 ```
 
-project-tracker's `get_maintenance_checklist` returns partial findings — they will have `kind`, `what`, `path`, `evidence`, `recommendation`, `confidence`. The skill must fill in `rationale` and `action_on_approval` after researching.
+project-tracker's `get_maintenance_checklist` returns partial findings - they will have `kind`, `what`, `path`, `evidence`, `recommendation`, `confidence`. The skill must fill in `rationale` and `action_on_approval` after researching.
 
 ## Action log entry shape
 
@@ -26,6 +26,6 @@ Each entry appended to `automated` / `user_authorized` / `rejected`:
   "kind": "...",
   "action": "<short description>",
   "detail": "<file, command, or data touched>",
-  "reason": "<only for rejected — the user's stated reason or 'declined'>"
+  "reason": "<only for rejected - the user's stated reason or 'declined'>"
 }
 ```

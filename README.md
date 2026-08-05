@@ -2,22 +2,49 @@
 
 An agent skill that runs the session-closing ritual: externalizes ephemeral working memory into durable artifacts, then brings every touched repo into a clean state for the next session.
 
-See `docs/specs/2026-04-11-wrap-design.md` for the full design rationale.
-
 **Repo:** <https://github.com/mtschoen/skills-wrap>
+
+## Design
+
+Wrap has two equally-mandatory jobs: **externalize** what the agent knows but no file records yet, and **leave no mess behind** in any repo the session touched. The framing is *"externalize what's about to be destroyed, then clean up."*
+
+Non-goals, all deliberate:
+
+- **Never auto-runs.** Not from a `SessionEnd` hook, not from a `Stop` hook, not invoked by another skill. The user asks or it doesn't run.
+- **Not a repo audit.** Rare-tier checks (default-branch renames, CLAUDE.md/AGENTS.md merges, missing README/LICENSE, dead code, large files, disk warnings) belong to `project-maintenance`. See `references/hygiene-checklist.md` for how the two partition the work.
+- **Not stateful.** Wrap keeps no record of its own runs. Each invocation asks "what's true right now", which is what makes re-runs safe.
+- **Not tool-coupled.** `SKILL.md` is tool-agnostic prose. The agent picks whatever is available at runtime.
+- **Not cross-session.** Wrap only sees what *this* session did.
+
+**Why intentional-only.** Not every session exit is a wrap. Restarting the agent, rebooting, or context-switching are quick exits where cleanup would be wrong and annoying; a wrap is for when a line of work is actually done. Only the user knows which one they're in, so only the user starts a wrap. The `SessionEnd` hook may *nudge* (see `references/session-end-reminder.md`), never invoke.
 
 ## Status
 
-Stable, actively pressure-tested through Run 7c across 19 scenarios. Most runs pass or are partial (partials are largely testing-infrastructure limits, with one acknowledged spec-clarity gap); two genuine failures found in Run 7 were fixed and re-verified passing in Run 7b/7c. No safety violations in any run. See `AUDIT.md` for full results.
+Stable, pressure-tested through Run 7c across 19 scenarios (20 are now specified). No safety violations in any run; the two genuine failures Run 7 found were fixed and re-verified in Run 7b/7c.
+
+As of 2026-08-04 the skill asks in prose rather than through a structured question widget, so the recorded results predate the current ask mechanism and a re-baseline run is outstanding. `tests/run-audit.sh` makes that repeatable. See `AUDIT.md` for full results and the open list.
 
 This skill is part of the completion suite: `maintaining-full-coverage`, `smoke-test`, `docs-update`, `escalate-over-shortcut`, and `wrap`. Suite skills install separately (each lives in its own repo) but are designed to be installed together, and they reference each other directly. Each works standalone; treat cross-references to missing suite members as optional.
 
 ## Install
 
+### As a plain skill
+
 1. Copy the repo contents (`SKILL.md`, `references/`, `hooks/`) to `~/.agents/skills/wrap/` (or wherever your agent harness reads skills).
-2. Register a session-end hook in the agent's settings — use the `update-config` skill, pointing it at `hooks/session-end-reminder.sh` (Unix/macOS) or `hooks/session-end-reminder.ps1` (Windows). This step depends on the harness supporting session-end hooks; not every harness does.
+2. Register a session-end hook in the agent's settings - use the `update-config` skill, pointing it at `hooks/session-end-reminder.sh` (Unix/macOS) or `hooks/session-end-reminder.ps1` (Windows). This step depends on the harness supporting session-end hooks; not every harness does.
 3. (Optional) The `scripts/find-unwrapped.sh` / `.ps1` companions are diagnostics that scan the agent's session transcripts and are not required for `/wrap` itself - copy `scripts/` too if you want them, or just run them from a checkout of this repo. Override the default transcript root with the `AGENTS_SESSIONS_DIR` env var.
+
+### As a Claude Code plugin
+
+A plugin discovers skills under `skills/<name>/`, which is not this repo's layout, so the plugin tree is generated rather than committed twice:
+
+```bash
+./scripts/build-plugin.sh          # writes build/plugin/
+claude plugin install "$PWD/build/plugin"
+```
+
+The generated tree carries `hooks/hooks.json`, so the session-end nudge registers itself - step 2 above is not needed on this path.
 
 ## Invocation
 
-Type `/wrap` at the end of a session when you are ready to close out. Wrap is always intentional — it never auto-runs.
+Type `/wrap` at the end of a session when you are ready to close out. Wrap is always intentional - it never auto-runs.
