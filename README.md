@@ -1,6 +1,6 @@
 # wrap
 
-An agent skill that runs the session-closing ritual: externalizes ephemeral working memory into durable artifacts, then brings every touched repo into a clean state for the next session.
+A skill that runs the session-closing ritual: externalizes ephemeral working memory into durable artifacts, then brings every touched repo into a clean state for the next session.
 
 **Repo:** <https://github.com/mtschoen/skills-wrap>
 
