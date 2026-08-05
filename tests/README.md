@@ -101,19 +101,46 @@ the alternative is trusting a flag that may have silently stopped applying: no
 hook fired other than wrap's own `SessionEnd` nudge, the `init` line lists
 `wrap:wrap` (or, for a control, no wrap), and no MCP server is attached.
 
-### What clean-room mode does not strip
+### Memory files, and why `-c` alone is not enough
 
-Your `~/.claude/CLAUDE.md` and anything it imports **still reach the session** -
-settings sources govern settings, not memory files. A clean-room probe on this
-machine still knew the operator's Gitea conventions and "full send" safe word.
+`-c` does not touch **memory** files: your `~/.claude/CLAUDE.md` and anything it
+imports still reach the session, because settings sources govern settings. Worse,
+memory is also discovered by walking from the session's **cwd** up to `$HOME`, so
+a fixture anywhere under home picks up a home-level `CLAUDE.md` or `AGENTS.md`
+even from an otherwise pristine config. On Windows that is the default case: the
+mktemp root is `%TEMP%`, which lives under your home directory.
 
-Removing those needs a separate config directory, which relocates settings,
-skills and the memory root in one move. Set `WRAP_AUDIT_CONFIG_DIR` to one and
-the harness exports it as `CLAUDE_CONFIG_DIR` and retargets the memory-pollution
-snapshot into it. Provisioning it is left to you deliberately: a fresh config
-dir has no credentials, so it needs either `claude /login` run against it once
-or an `ANTHROPIC_API_KEY` in the environment (which bills the API rather than a
-subscription). This script will not copy your credentials anywhere.
+Closing both takes two things:
+
+1. **Fixtures outside home.** `-c` and `-C` refuse to run otherwise, since the
+   alternative is a clean room that quietly is not one. Pass `-o` a path outside
+   `$HOME` (`-o C:/wrap-audit` on Windows; `/tmp/...` already qualifies on Linux).
+2. **A separate config dir.** `WRAP_AUDIT_CONFIG_DIR` is exported as
+   `CLAUDE_CONFIG_DIR`, which relocates settings, skills and the memory root in
+   one move; the memory-pollution snapshot follows it there.
+
+Provisioning that dir is left to you deliberately - a fresh one has no
+credentials, so it needs `claude /login` run against it once, or an
+`ANTHROPIC_API_KEY` (which bills the API rather than a subscription). This
+script will not copy your credentials anywhere.
+
+```powershell
+$env:CLAUDE_CONFIG_DIR = "$env:USERPROFILE\.claude-cleanroom"; claude   # then /login, /exit
+```
+
+```bash
+WRAP_AUDIT_CONFIG_DIR="C:/Users/you/.claude-cleanroom" ./run-audit.sh -c -o C:/wrap-audit 2 15
+```
+
+Verify it took, rather than assuming: ask a throwaway session whether it knows
+something only your own memory files say. Both halves are needed - with the
+config dir but a fixture under home, that probe still answered "yes".
+
+Windows note: give `WRAP_AUDIT_CONFIG_DIR` a **Windows-style** path. A native
+`claude.exe` cannot resolve the `/c/Users/...` form git-bash produces, and it
+does not complain - it silently uses an empty config, and every turn dies with
+`Not logged in`. The harness runs paths through `cygpath` for you, but anything
+you set by hand elsewhere is on its own.
 
 ## What it does and does not decide
 

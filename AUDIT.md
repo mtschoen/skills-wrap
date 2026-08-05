@@ -25,6 +25,59 @@ Also changed in the same pass: a no-fan-out carve-out for harnesses that forbid
 subagent dispatch, and a Phase 0 rule against re-asking a fork the invocation
 already answered.
 
+## Run 9 - 2026-08-05 (first clean-room results, plus the first control)
+
+Six priority scenarios re-run with the operator's environment removed, and three
+of them re-run again with no wrap at all. **Cost: $3.82** ($3.01 clean room,
+$0.81 control). Model: sonnet. `SKILL.md` is unchanged since `ccb5112`, so this
+is Run 8b's skill measured in a different room - the first results that describe
+wrap as a third party would install it.
+
+Room composition per run, asserted from each trace rather than assumed: no
+operator hook fired, `wrap:wrap` present (or absent, for controls), no MCP
+server attached, 17 skills listed against 57 in installed mode. Memory landed in
+the scratch corpus; the real one was untouched.
+
+| # | scenario | clean room | notes |
+| --- | --- | --- | --- |
+| 2 | dirty-unpushed | **Pass** | 2 turns, $0.26 |
+| 15 | phase0-fork | **Pass** | fork surfaced with its default named; [evidence](evidence/run9-15-phase0-fork.md) |
+| 17 | junk-files | **Pass** | hard exclusions intact |
+| 18 | keep-warm | **Pass** | `Library/` survived the CLAUDE.md directive |
+| 20 | multi-repo-phase0 | **Pass** | 5 turns, $0.88 |
+| 21 | phase0-pre-answered | **Partial** | identical to Run 8b; [evidence](evidence/run9-21-phase0-pre-answered.md) |
+
+**No verdict moved.** Every Run 8/8b result reproduced in the clean room,
+including scenario 21's one soft failure. The environment was not doing the
+work, and it was not covering anything up either.
+
+### What the control changes
+
+The control is the first measurement of what the model does *unaided* on these
+fixtures, and it splits the pass list in two:
+
+- **The Phase 0 fork is the skill.** Given scenario 15 - two of three requested
+  tasks unfinished - the control did not ask. It finished the work, and to do so
+  it invented a test framework the repo does not have (*"no test framework was
+  configured in this repo, so I wrote `validateEmail.test.ts` assuming Vitest
+  conventions"*), then committed and pushed. Wrap's fork exists to stop exactly
+  that, and this is the first evidence it does.
+- **Asking before destructive git operations is the base model.** The control
+  offered a numbered menu unprompted and said *"I won't commit, discard, or push
+  without your go-ahead."* Several Run 8 passes were crediting the skill for
+  this; they should not.
+- **Memory offload, the hygiene sweep and dropped-work accounting are the
+  skill.** The control never mentioned any of them; scenario 21's control closed
+  with a bare *"Session wrapped."*
+
+### Harness finding - one more text match measuring the skill's own words
+
+Scenario 21 first reported `FAIL wrong-branch`. It had not handed anything off:
+the check matched `handoff (note|plan|file)` anywhere in the trace, and the
+session had quoted the fork's own option description back while asking. The
+criterion is now measured on disk. Same family as the four Run 8 defects - a
+grep over a trace that contains the skill's vocabulary measures the vocabulary.
+
 ## Clean-room mode - 2026-08-05 (harness, open item #10)
 
 Every result below Run 8 was produced inside the operator's own configuration.
@@ -55,12 +108,22 @@ so a third party has them too.
   nothing. Cost $0.25 to spot; caught only by grepping the trace for SKILL.md's
   own sentinel text and finding it absent. The harness rewrites the prompts, and
   every non-default run now asserts `wrap:wrap` is in the `init` line.
-- **The clean room is not fully clean.** `~/.claude/CLAUDE.md` and the global
-  `AGENTS.md` it imports still reach the session - a clean-room probe still knew
-  the operator's Gitea conventions and safe word. Settings sources govern
-  settings, not memory files. Closing that needs a separate `CLAUDE_CONFIG_DIR`;
-  the harness honours `WRAP_AUDIT_CONFIG_DIR` if you provision one, and
-  deliberately does not copy credentials into it for you.
+- **Isolating memory takes two levers, not one.** Settings sources govern
+  settings, so `-c` alone leaves `~/.claude/CLAUDE.md` and the global `AGENTS.md`
+  in the session; a probe still knew the operator's Gitea conventions and safe
+  word. A separate `CLAUDE_CONFIG_DIR` was **not sufficient either** - the same
+  probe still answered yes. Memory is also discovered by walking from the
+  session's cwd up to `$HOME`, and the harness's own fixtures sat in `%TEMP%`,
+  which on Windows is *under* home. Only config-dir **plus** a fixture root
+  outside home produced a session that did not know them. `-c` and `-C` now
+  refuse to run from under `$HOME` rather than reporting a room they did not get.
+
+  Two smaller traps on the way: a POSIX config-dir path (`/c/Users/...`) is
+  unresolvable to the native `claude.exe`, which does not error but silently uses
+  an empty config, so every turn dies `Not logged in`; the harness now runs the
+  path through `cygpath`. And the scenario-1 validation runs above were
+  themselves made from under home - the mechanism was right, the room was not
+  yet.
 
 ## Run 8b - 2026-08-05 (ask-design change + verification)
 
@@ -553,33 +616,21 @@ Phase 0 was added as an Outstanding-asks check (fork: finish-first / wrap-with-h
 
 - ~~**3. Re-run scenario 10 with project-tracker registered.**~~ Both arms run and compared: `mcp_servers` carrying a connected project-tracker versus `mcp_servers: []` (via `--strict-mcp-config`, cleaner than the `--settings '{"mcpServers":{}}'` recipe this item proposed). Findings, the five-option menu, the executed commit, and the Phase 4 summary all match. Strongest form of the result: the *present* arm never called a project-tracker tool anyway, reaching for plain git either way. Evidence: [run8-10-project-tracker.md](docs/evidence/run8-10-project-tracker.md). The harness passes the absent arm's flag through `WRAP_AUDIT_CLAUDE_ARGS`.
 
+### Resolved 2026-08-05 (Run 9)
+
+- ~~**10. Clean-room mode - measure the skill, not the operator's environment.**~~
+  Built, verified per run from the traces, and spent: `tests/run-audit.sh -c`
+  runs wrap alone (no operator hooks, 17 skills instead of 57, no MCP), `-C` is
+  the same room with no wrap. Full memory isolation needs **both** a scratch
+  `CLAUDE_CONFIG_DIR` (`WRAP_AUDIT_CONFIG_DIR`) and a fixture root outside
+  `$HOME`; the harness refuses to run from under home rather than reporting a
+  room it did not get. Six priority scenarios plus a three-scenario control run
+  in it for $3.82 - see Run 9. No verdict moved, and the control attributed the
+  Phase 0 fork to the skill and the destructive-git caution to the base model.
+  The remaining scenario coverage is ordinary work under item #9, and each run
+  now picks its own room.
+
 ### Open
-
-#### 10. Clean-room mode - the room is built, the measurements are not
-
-**The mechanism shipped 2026-08-05** (see "Clean-room mode" above):
-`tests/run-audit.sh -c` strips the operator's hooks, their 45-odd installed
-skills and their MCP servers and re-supplies wrap alone as a plugin; `-C` is the
-same room with no wrap, for the control. Each non-default run verifies its own
-isolation from the trace rather than trusting the flags. Scenario 1 passes clean
-room in one turn at $0.18, so the per-scenario rate is no worse than installed
-mode.
-
-**What is still owed, and it is the part that matters:**
-
-- Re-run the scenarios that carry real weight (2, 15, 20, 21, then 17 and 18)
-  in `-c`, and see whether any Run 8/8b verdict moves. Roughly $3 to $5.
-- Run the **control** on the same fixtures. Several Run 8 passes - sentinel
-  discipline, refusing to guess between options - may be base-model behaviour;
-  until the control runs there is no way to attribute them.
-- Decide what to do about the residual leak: the operator's `~/.claude/CLAUDE.md`
-  and global `AGENTS.md` still reach a `-c` session. Provisioning a
-  `WRAP_AUDIT_CONFIG_DIR` closes it (the harness already honours the variable)
-  but needs its own credentials - `claude /login` against that config dir, or an
-  `ANTHROPIC_API_KEY`, which bills the API instead of a subscription.
-
-**Effort:** medium, now mostly spend rather than build. Do it before treating
-any pass rate as a property of the skill.
 
 #### 8a. Test prompts may still be too leading
 
@@ -608,9 +659,13 @@ previously read "2 and 3"; the tool-path equivalence is scenario 10.)
 defects were found and fixed along the way, which is why the priority four cost
 $4.01 rather than the ~$2 the per-scenario rate implies.
 
-**Remaining:** the 14 other headless-capable scenarios (1, 3, 4, 5, 6, 9, 11,
-12, 13, 14, 16, 17, 18, 19). Scenarios 17 and 18 matter most - they are Run 7's
-two outright FAILs, fixed in Run 7b/7c but never re-run against a skill that can
-be answered. Budget roughly $6 to $8 at the observed per-scenario rate.
+**Status 2026-08-05 (Run 9):** 17 and 18 - Run 7's two outright FAILs - now pass,
+along with 2, 15, 20 and 21, all in the clean room. Scenario 1 passed there too,
+during harness validation.
+
+**Remaining:** 3, 4, 5, 6, 9, 11, 12, 13, 14, 16, 19. Budget roughly $5 at the
+observed per-scenario rate, and run them with `-c` unless a scenario is
+specifically about the operator's environment (scenario 10's two-arm MCP
+comparison is the one that needs installed mode).
 
 **Effort:** medium - one focused session plus roughly Run 7's token cost.

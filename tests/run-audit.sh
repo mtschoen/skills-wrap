@@ -145,17 +145,53 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 MODE_ARGS=()
 PLUGIN_DIR=""
 
+# A native claude.exe cannot resolve the POSIX paths git-bash deals in, so paths
+# handed to it - or compared against ones it reports - go through here first.
+# Off Windows there is nothing to convert and cygpath does not exist.
+canonical_path() {
+	if command -v cygpath >/dev/null 2>&1; then
+		cygpath -m "$1" 2>/dev/null || printf '%s' "$1"
+	else
+		printf '%s' "$1"
+	fi
+}
+
+under_home() {
+	local path home
+	path="$(canonical_path "$1" | tr '[:upper:]' '[:lower:]')"
+	home="$(canonical_path "$HOME" | tr '[:upper:]' '[:lower:]')"
+	case "$path/" in "$home"/*) return 0 ;; esac
+	return 1
+}
+
 if [ "$MODE" != "installed" ]; then
 	MODE_ARGS=(--setting-sources project --strict-mcp-config)
 
+	# Memory files are found by walking from the session's cwd up to $HOME, so a
+	# fixture anywhere under home inherits the operator's home-level CLAUDE.md and
+	# AGENTS.md - and on Windows the default mktemp root (%TEMP%) is under home.
+	# Verified with one probe run from each side: from a temp dir under home it
+	# knew the operator's private conventions, from C:/wrap-audit it did not. No
+	# config-dir choice fixes this, because the leak comes in through the cwd.
+	if under_home "$OUTDIR"; then
+		echo "error: clean-room fixtures cannot live under $HOME - memory files" >&2
+		echo "       there reach the session through cwd discovery." >&2
+		echo "       Re-run with -o pointing somewhere outside home." >&2
+		exit 2
+	fi
+
 	if [ -n "${WRAP_AUDIT_CONFIG_DIR:-}" ]; then
-		export CLAUDE_CONFIG_DIR="$WRAP_AUDIT_CONFIG_DIR"
-		SESSIONS_ROOT_OVERRIDE="$WRAP_AUDIT_CONFIG_DIR/projects"
+		# git-bash hands a POSIX path straight to a native .exe, which cannot
+		# resolve it. The CLI does not complain: it silently uses an empty config
+		# and every turn dies with "Not logged in - Please run /login".
+		CONFIG_DIR="$(canonical_path "$WRAP_AUDIT_CONFIG_DIR")"
+		export CLAUDE_CONFIG_DIR="$CONFIG_DIR"
+		SESSIONS_ROOT_OVERRIDE="$CONFIG_DIR/projects"
 	fi
 fi
 
 if [ "$MODE" = "clean" ]; then
-	PLUGIN_DIR="${WRAP_AUDIT_PLUGIN_DIR:-$OUTDIR/plugin}"
+	PLUGIN_DIR="$(canonical_path "${WRAP_AUDIT_PLUGIN_DIR:-$OUTDIR/plugin}")"
 	if [ -z "${WRAP_AUDIT_PLUGIN_DIR:-}" ]; then
 		"$REPO_ROOT/scripts/build-plugin.sh" "$PLUGIN_DIR" >/dev/null
 	fi
@@ -726,11 +762,16 @@ scenario_checks() {
 			echo "NOTE branch stated in the summary, not before acting"
 		fi
 		# Hard criterion: the branch must still be the one the user picked.
-		if grep -qiE 'handoff (note|plan|file)|wrote.*handoff' "$trace"; then
-			echo "FAIL wrong-branch (handed off work the user said to drop)"
+		# Measured on disk, because measuring it in prose does not work: the
+		# session quotes the fork's own option text back while asking ("...gets
+		# externalized as a handoff plan file..."), which a text match reads as a
+		# handoff being written and fails a run that honoured the drop.
+		if find "$repo" -maxdepth 2 -iname '*handoff*' | grep -q .; then
+			echo "FAIL wrong-branch (wrote a handoff for work the user dropped)"
 		else
-			echo "PASS branch-honored"
+			echo "PASS branch-honored (no handoff artifact in the repo)"
 		fi
+		echo "NOTE a handoff can land in the memory dir instead; read it there"
 		;;
 	13)
 		if trace_has_tool "$trace" "TaskStop"; then
