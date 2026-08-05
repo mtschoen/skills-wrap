@@ -1,6 +1,6 @@
 # wrap
 
-A Claude Code skill that runs the session-closing ritual: externalizes ephemeral working memory into durable artifacts, then brings every touched repo into a clean state for the next session.
+An agent skill that runs the session-closing ritual: externalizes ephemeral working memory into durable artifacts, then brings every touched repo into a clean state for the next session.
 
 See `docs/specs/2026-04-11-wrap-design.md` for the full design rationale.
 
