@@ -14,7 +14,7 @@ If any fire, prints a single-line reminder. Otherwise prints nothing.
 
 ## Rate limiter
 
-A marker file at `~/.claude/wrap-nudge-last-fired`. If the hook fired within the last 5 minutes, the hook skips entirely (prevents noise during quick-exit-restart cycles). On each non-skipped run, the hook touches the marker.
+A marker file at `~/.agents/wrap/nudge-last-fired`. If the hook fired within the last 5 minutes, the hook skips entirely (prevents noise during quick-exit-restart cycles). On each non-skipped run, the hook touches the marker.
 
 **Wrap itself does not read or write this file.** Full decoupling — the skill and the hook know nothing about each other.
 

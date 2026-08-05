@@ -45,7 +45,7 @@ The session-closing ritual for a coding agent session. Performs two equally-mand
 **Two hard invariants:**
 
 - **No questions.** Every `AskUserQuestion` batch in Phases 0–3 is skipped; each takes its fast-mode default from the table below. Fast mode never blocks on the user.
-- **Safe actions only.** Fast mode **writes** (memory files, AGENTS.md/CLAUDE.md edits, wrap's own hygiene commit) but never **destroys or moves** data: no file deletes, no archiving/moving plan files, no stashing, and no committing or pushing the user's pre-existing work. Every destructive or user-facing action is recorded in the Phase 4 summary as *deferred*, not performed.
+- **Safe actions only.** Fast mode **writes** (memory files, AGENTS.md edits, wrap's own hygiene commit) but never **destroys or moves** data: no file deletes, no archiving/moving plan files, no stashing, and no committing or pushing the user's pre-existing work. Every destructive or user-facing action is recorded in the Phase 4 summary as *deferred*, not performed.
 
 **Over-share, don't curate.** Because nobody is coming back to this session, lower the bar for what gets saved. When unsure whether a memory item is worth keeping, keep it. Fast mode deliberately trades a fatter memory footprint for zero lost context.
 
@@ -133,7 +133,7 @@ When taking the inline path, the orchestrator MUST still load the relevant refer
 
 **3a. Per-repo memory offload (orchestrator, all repos sequentially).**
 
-For each repo in the Phase 1 list, walk the **per-project categories** section of `references/categories.md` and draft candidate items in the orchestrator's main context - project learnings, decisions, AGENTS.md/CLAUDE.md updates, gotchas. This step has no verbose tool output: it is recall-driven drafting against the conversation context already loaded. Subagent isolation buys nothing here, and the nuance cost of fanning it out outweighs the savings.
+For each repo in the Phase 1 list, walk the **per-project categories** section of `references/categories.md` and draft candidate items in the orchestrator's main context - project learnings, decisions, AGENTS.md updates, gotchas. This step has no verbose tool output: it is recall-driven drafting against the conversation context already loaded. Subagent isolation buys nothing here, and the nuance cost of fanning it out outweighs the savings.
 
 The 3a drafts are not yet executed or shown to the user. Hold them in working memory; they are combined with 3b/3c findings before the AskUserQuestion batch in the per-repo review step below. The drafts are also passed into each subagent's brief as cross-reference material so subagents don't duplicate them.
 
@@ -148,7 +148,7 @@ After 3a is complete for all touched repos, dispatch per-repo subagents (model: 
 For each subagent (per repo or per bucket), the prompt should include:
 
 1. **Why this repo is in scope** - one sentence from the orchestrator's recall, e.g. *"This session refactored the auth middleware and added two new test files; that's why this repo is in the wrap."*
-2. **Pre-flagged hotspots** - specific files, plan paths, or directories the orchestrator already half-noticed and wants the subagent to look at first, e.g. *"Pay particular attention to `plans/auth-rewrite.md` (likely completed this session), the untracked `notes/scratch-2.md` (looks like loose-thread material), and check whether `CLAUDE.md` mentions the deprecated `validateSession` helper - we removed it."* This is the "leading content" that converts the subagent from "explore cold" to "verify these specific suspicions and surface anything else nearby."
+2. **Pre-flagged hotspots** - specific files, plan paths, or directories the orchestrator already half-noticed and wants the subagent to look at first, e.g. *"Pay particular attention to `plans/auth-rewrite.md` (likely completed this session), the untracked `notes/scratch-2.md` (looks like loose-thread material), and check whether `AGENTS.md` mentions the deprecated `validateSession` helper - we removed it."* This is the "leading content" that converts the subagent from "explore cold" to "verify these specific suspicions and surface anything else nearby."
 3. **3a drafts already produced for this repo** - so the subagent can cross-reference and not duplicate, e.g. *"The orchestrator has already drafted these per-project memory items: [list]. If your 3b/3c findings overlap, flag the duplication rather than re-drafting."*
 4. **What to do** - *"Follow `references/plan-classification.md` for 3b and `references/hygiene-checklist.md` for 3c. Return findings (not actions) - the orchestrator will assemble the user-approval batch and dispatch executors after approval."*
 5. **Return schema** - match `references/finding-schema.md`. Also include a short repo-level summary fragment (commits expected, plans found by state, hygiene findings count) for Phase 4 to stitch into the final summary.
@@ -171,13 +171,13 @@ Critical: destructive actions in 3c gate on 3a + 3b having completed successfull
 
 This sub-phase produces **two separate commits** (at most) per repo, in this order: first wrap's own edits auto-commit, then the user-work prompt runs. Never combine them - they must be distinguishable in git history.
 
-**Wrap's own edits (commit #1, automatic).** Everything wrap wrote during 2, 3a, 3b, 3c (memory updates, AGENTS.md/CLAUDE.md edits, archived plans, deleted scratch) auto-commits in one commit per repo with this message format:
+**Wrap's own edits (commit #1, automatic).** Everything wrap wrote during 2, 3a, 3b, 3c (memory updates, AGENTS.md edits, archived plans, deleted scratch) auto-commits in one commit per repo with this message format:
 
 ```text
 chore: wrap session hygiene
 
 - <one bullet per category of change, e.g. "Archived 2 completed plans">
-- <e.g. "Updated AGENTS.md/CLAUDE.md with 3 new project facts">
+- <e.g. "Updated AGENTS.md with 3 new project facts">
 
 Wrap-Session-Id: <current session id if known, else a timestamp>
 ```
@@ -252,6 +252,6 @@ The two sentinels are distinct on purpose: the "go ahead and close" line is the 
 
 ## Companion scripts
 
-User-facing diagnostic utilities shipped alongside the skill, scanning the agent's session transcripts, overridable via the `AGENT_SESSIONS_DIR` env var. Not invoked during the wrap procedure itself.
+User-facing diagnostic utilities shipped alongside the skill, scanning the agent's session transcripts, overridable via the `AGENTS_SESSIONS_DIR` env var. Not invoked during the wrap procedure itself.
 
 - `scripts/find-unwrapped.sh` (bash) and `scripts/find-unwrapped.ps1` (PowerShell) - list recent agent sessions that did NOT end with `/wrap`. Useful for recovering after a crash, a culled agent process, or just answering *"did I leave anything dangling?"*. Defaults filter to sessions since 2026-04-30 (the earliest observed real `/wrap` invocation - routine adoption lagged the skill's 2026-04-11 first commit by a few weeks), ≥50 KB, excluding `wrap-test*` scratch projects. Override the date cutoff with `--since`/`--no-since` (bash) or `-Since`/`-NoSince` (PS). Run with `--help` (bash) or `Get-Help` (PS) for full options.

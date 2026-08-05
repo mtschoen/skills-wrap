@@ -44,7 +44,7 @@ set -euo pipefail
 # is missed by the older `"skill":"wrap"`-only heuristic.
 wrap_marker_pattern='"(skill|attributionSkill)":"wrap"|<command-name>/wrap</command-name>|Launching skill: wrap'
 
-projects_dir="${AGENT_SESSIONS_DIR:-$HOME/.claude/projects}"
+projects_dir="${AGENTS_SESSIONS_DIR:-$HOME/.claude/projects}"
 limit=50
 since='2026-04-30'
 min_bytes=50000

@@ -72,7 +72,7 @@ $ErrorActionPreference = 'Stop'
 # is missed by the older "skill":"wrap"-only heuristic.
 $wrapMarkerPattern = '"(skill|attributionSkill)":"wrap"|<command-name>/wrap</command-name>|Launching skill: wrap'
 
-$projectsDir = if ($env:AGENT_SESSIONS_DIR) { $env:AGENT_SESSIONS_DIR } else { Join-Path $HOME '.claude\projects' }
+$projectsDir = if ($env:AGENTS_SESSIONS_DIR) { $env:AGENTS_SESSIONS_DIR } else { Join-Path $HOME '.claude\projects' }
 if (-not (Test-Path $projectsDir)) {
     Write-Error "no projects dir at $projectsDir"
     exit 1

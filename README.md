@@ -16,7 +16,7 @@ This skill is part of the completion suite: `maintaining-full-coverage`, `smoke-
 
 1. Copy the repo contents (`SKILL.md`, `references/`, `hooks/`) to `~/.agents/skills/wrap/` (or wherever your agent harness reads skills).
 2. Register a session-end hook in the agent's settings — use the `update-config` skill, pointing it at `hooks/session-end-reminder.sh` (Unix/macOS) or `hooks/session-end-reminder.ps1` (Windows). This step depends on the harness supporting session-end hooks; not every harness does.
-3. (Optional) The `scripts/find-unwrapped.sh` / `.ps1` companions are diagnostics that scan the agent's session transcripts and are not required for `/wrap` itself - copy `scripts/` too if you want them, or just run them from a checkout of this repo. Override the default transcript root with the `AGENT_SESSIONS_DIR` env var.
+3. (Optional) The `scripts/find-unwrapped.sh` / `.ps1` companions are diagnostics that scan the agent's session transcripts and are not required for `/wrap` itself - copy `scripts/` too if you want them, or just run them from a checkout of this repo. Override the default transcript root with the `AGENTS_SESSIONS_DIR` env var.
 
 ## Invocation
 
