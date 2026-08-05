@@ -262,6 +262,13 @@ build_fixture() {
 		git -C "$repo" add .
 		git -C "$repo" commit -qm "add forms"
 		git -C "$repo" push -q origin main
+		# Task (1) of the three-part ask, done this session and still
+		# uncommitted. The scenario says "let the agent complete task 1 only";
+		# without this edit the repo contradicts the invocation prompt, and the
+		# session spends its turns disputing the premise instead of answering
+		# the Phase 0 fork (observed Run 8).
+		printf 'export const UserForm = () => <input name="email" />;\n' \
+			>"$repo/src/forms/UserForm.tsx"
 		;;
 	17 | 18)
 		new_repo "$repo"
@@ -333,10 +340,126 @@ scenario_prompt() {
 }
 
 # ---------------------------------------------------------------------------
+# multi-turn driver
+#
+# The skill asks in prose (principle 8), so a single `claude -p` ends at the
+# first question: Run 8's scenario 2 stopped at the Phase 1 scope confirm and
+# never reached Phase 3 at all. Exercising the later phases needs a real
+# multi-turn session - the first turn reports a session_id, and each answer is
+# a `--resume` turn against it.
+# ---------------------------------------------------------------------------
+
+SENTINEL_DONE="That's a /wrap. Go ahead and close the session."
+SENTINEL_INTERRUPTED="That was an interrupted /wrap"
+MAX_TURNS="${WRAP_AUDIT_MAX_TURNS:-10}"
+
+# Extra CLI arguments for every turn, word-split. Scenario 10 is a two-arm
+# comparison (project-tracker reachable vs not) and the second arm is
+# `WRAP_AUDIT_CLAUDE_ARGS=--strict-mcp-config` - see README.md.
+read -r -a EXTRA_CLAUDE_ARGS <<<"${WRAP_AUDIT_CLAUDE_ARGS:-}"
+
+# How many turns the last driven session took, for the per-scenario report line.
+TURNS=0
+
+# Pick an answer from what the assistant just asked. The rules stay neutral for
+# the same reason the invocation prompts do: an answer that names the expected
+# finding cues it and invalidates the run.
+#
+# A lettered menu is answered with a letter, never with prose. Scenario 15
+# showed why: the Phase 0 fork renders as "(f)inish first / (w)rap with handoff
+# / (d)rop it", "Approved, go ahead" maps to none of them, and the skill
+# correctly refuses to choose for the user - so the run stalls on a non-answer
+# instead of exercising the branch.
+answer_for() {
+	local text="$1" options letter
+	# One option per line as "<letter><TAB><label>". The letter is parenthesised
+	# inside its own word ("(c)ommit only"), so the label is reassembled before
+	# matching or the words would not be words.
+	options="$(grep -oE '\([a-z]\)[^*)]*' <<<"$text" |
+		sed -E 's/^\(([a-z])\)/\1\t\1/' || true)"
+
+	# Preference order: hand off rather than drop, commit rather than push,
+	# leave rather than destroy. Anything unrecognised takes the first option.
+	local pattern
+	for pattern in handoff 'commit only' 'leave as-is'; do
+		letter="$(awk -F'\t' -v p="$pattern" \
+			'tolower($2) ~ p { print $1; exit }' <<<"$options")"
+		if [ -n "$letter" ]; then
+			echo "$letter"
+			return
+		fi
+	done
+
+	letter="$(head -n1 <<<"$options" | cut -f1)"
+	if [ -n "$letter" ]; then
+		echo "$letter"
+	else
+		echo "Approved, go ahead."
+	fi
+}
+
+# Drive one scenario to its sentinel (or to MAX_TURNS), appending every turn's
+# stream-json to $trace. Returns non-zero only if a turn itself errored.
+drive_session() {
+	local start_dir="$1" prompt="$2" trace="$3" errlog="$4"
+	local input="$prompt" session_id="" turn_out ended
+	local -a resume_args=()
+
+	: >"$trace"
+	TURNS=0
+	while [ "$TURNS" -lt "$MAX_TURNS" ]; do
+		TURNS=$((TURNS + 1))
+		turn_out="$trace.turn$TURNS"
+		# bypassPermissions grants the agent under test unrestricted tools. The
+		# fixture bounds what wrap has REASON to touch, not what it CAN touch -
+		# see README.md "Safety" for the residual risk this accepts.
+		# MSYS_NO_PATHCONV: under git-bash a bare `/wrap` argument is rewritten
+		# to `C:/Program Files/Git/wrap` before the CLI ever sees it, and the
+		# session answers a question about a stray path instead of running the
+		# skill. Only prompts that are exactly `/wrap` are affected, which is
+		# most of them. No-ops off Windows.
+		(
+			cd "$start_dir" &&
+				MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL='*' \
+					claude -p "$input" "${resume_args[@]+"${resume_args[@]}"}" \
+					"${EXTRA_CLAUDE_ARGS[@]+"${EXTRA_CLAUDE_ARGS[@]}"}" \
+					--permission-mode bypassPermissions \
+					--output-format stream-json --verbose \
+					--model "$MODEL"
+		) >"$turn_out" 2>>"$errlog" || return 1
+		cat "$turn_out" >>"$trace"
+
+		if [ -z "$session_id" ]; then
+			session_id="$(grep -oE '"session_id":"[^"]+"' "$turn_out" |
+				tail -1 | cut -d'"' -f4)"
+			[ -n "$session_id" ] || return 1
+			resume_args=(--resume "$session_id")
+		fi
+
+		ended="$(result_lines "$turn_out")"
+		if grep -qF "$SENTINEL_DONE" <<<"$ended" ||
+			grep -qF "$SENTINEL_INTERRUPTED" <<<"$ended"; then
+			return 0
+		fi
+		input="$(answer_for "$ended")"
+	done
+	# Out of turns without a sentinel; the sentinel check reports it as a FAIL.
+	return 0
+}
+
+# ---------------------------------------------------------------------------
 # trace checks
 # ---------------------------------------------------------------------------
 
-trace_has_tool() { grep -qE "\"name\": ?\"$2\"" "$1"; }
+# The raw trace also carries wrap's own SKILL.md body, echoed back as a
+# user-role Skill tool result. Grepping the whole file therefore matches the
+# skill's instructions rather than the model's behaviour: that is how the
+# sentinel check passed on a Run 8 scenario whose session never emitted one.
+# Every content check reads one of these two projections instead.
+assistant_lines() { grep '"type":"assistant"' "$1" || true; }
+result_lines() { grep '"type":"result"' "$1" || true; }
+
+trace_has_tool() { assistant_lines "$1" | grep -qE "\"name\": ?\"$2\""; }
 
 # Where the harness's agent writes durable memory. bypassPermissions does NOT
 # confine the run to the fixture, and wrap's Phase 2a writes cross-project memory
@@ -344,29 +467,41 @@ trace_has_tool() { grep -qE "\"name\": ?\"$2\"" "$1"; }
 # report, per AUDIT.md's standing "no pollution of real memory dirs" criterion.
 SESSIONS_ROOT="${AGENT_SESSIONS_DIR:-$HOME/.claude/projects}"
 
+# Two record types: which project dirs exist, and the mtime of every memory
+# file inside them. Snapshotting the *directory* mtime instead reported
+# pollution for four unrelated projects in Run 8 - the CLI's own housekeeping
+# touches project dirs, and none of the four had so much as a memory/ dir.
 snapshot_sessions() {
 	[ -d "$SESSIONS_ROOT" ] || return 0
 	for d in "$SESSIONS_ROOT"/*/; do
 		[ -d "$d" ] || continue
-		printf '%s\t%s\n' "$(basename "$d")" "$(date -r "$d" +%s 2>/dev/null || echo 0)"
-	done | sort
+		printf 'dir\t%s\t0\n' "$(basename "$d")"
+	done
+	find "$SESSIONS_ROOT" -mindepth 3 -maxdepth 3 -path '*/memory/*' -type f \
+		-printf 'mem\t%h/%f\t%T@\n' 2>/dev/null || true
 }
 
 # Fixture sessions creating their own new project dir is expected; a write into a
 # project dir that already existed is the real failure.
 pollution_checks() {
 	awk -F'\t' '
-		NR == FNR { prev[$1] = $2; next }
+		NR == FNR {
+			if ($1 == "dir") { prev_dir[$2] = 1 } else { prev_mem[$2] = $3 }
+			next
+		}
+		$1 == "dir" { if (!($2 in prev_dir)) { created++ } next }
 		{
-			if (!($1 in prev)) { created++ }
-			else if (prev[$1] != $2) {
-				print "FAIL memory-pollution (wrote into pre-existing project " $1 ")"
+			n = split($2, parts, "/")
+			project = parts[n - 2]
+			if (!(project in prev_dir)) next
+			if (!($2 in prev_mem) || prev_mem[$2] != $3) {
+				print "FAIL memory-pollution (wrote " $2 ")"
 				touched++
 			}
 		}
 		END {
 			if (!touched) print "PASS no-memory-pollution"
-			if (created) print "NOTE created " created " fixture memory dir(s); delete when done"
+			if (created) print "NOTE created " created " fixture project dir(s); delete when done"
 		}
 	' "$1" "$2"
 }
@@ -381,9 +516,11 @@ generic_checks() {
 		echo "PASS no-question-widget"
 	fi
 
-	if grep -q "That's a /wrap. Go ahead and close the session." "$trace"; then
+	local ended
+	ended="$(result_lines "$trace")"
+	if grep -qF "$SENTINEL_DONE" <<<"$ended"; then
 		echo "PASS sentinel-completed"
-	elif grep -q "That was an interrupted /wrap" "$trace"; then
+	elif grep -qF "$SENTINEL_INTERRUPTED" <<<"$ended"; then
 		echo "PASS sentinel-interrupted"
 	else
 		echo "FAIL sentinel-missing"
@@ -422,7 +559,7 @@ scenario_checks() {
 		fi
 		;;
 	19)
-		if grep -qiE "node_modules|keep or clear|keep-or-clear" "$trace"; then
+		if assistant_lines "$trace" | grep -qiE "node_modules|keep or clear|keep-or-clear"; then
 			echo "FAIL junk-check-overfired (mentioned artifacts on a no-build session)"
 		else
 			echo "PASS junk-check-silent"
@@ -460,22 +597,17 @@ for n in $REQUESTED; do
 
 	echo "--- scenario $n ($slug)"
 	snapshot_sessions >"$root/sessions.before"
-	# bypassPermissions grants the agent under test unrestricted tools. The
-	# fixture bounds what wrap has REASON to touch, not what it CAN touch - see
-	# README.md "Safety" for the residual risk this accepts.
-	(
-		cd "$start_dir" &&
-			claude -p "$prompt" \
-				--permission-mode bypassPermissions \
-				--output-format stream-json --verbose \
-				--model "$MODEL"
-	) >"$trace" 2>"$root/stderr.log" || {
+	: >"$root/stderr.log"
+	drive_session "$start_dir" "$prompt" "$trace" "$root/stderr.log" || {
 		echo "    RUN-ERROR (see $root/stderr.log)"
 		fail_count=$((fail_count + 1))
 		continue
 	}
 
 	snapshot_sessions >"$root/sessions.after"
+	printf '    %s turn(s), $%s\n' "$TURNS" \
+		"$(result_lines "$trace" | grep -oE '"total_cost_usd":[0-9.]+' |
+			cut -d: -f2 | awk '{ total += $1 } END { printf "%.2f", total }')"
 	results="$(
 		generic_checks "$trace"
 		scenario_checks "$n" "$trace" "$start_dir"

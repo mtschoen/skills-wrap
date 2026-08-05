@@ -15,14 +15,100 @@ the cause of *most* of the "Partial" rows below: those runs did not find a skill
 defect, they found that the harness refused to answer. That class of result is
 retired.
 
-**Consequence:** every result in this file predates the conversion. The safety
+**Consequence:** every result below Run 8 predates the conversion. The safety
 findings (extract-first ordering, hard exclusions, no force-push) still describe
-the skill's design and still hold, but no row below has been re-verified against
-the current prose-ask skill. Run 8 (open item #9) is the re-baseline.
+the skill's design and still hold, but only the four scenarios re-run in Run 8
+(2, 10, 15, 20) have been verified against the current prose-ask skill. The
+other 14 have not.
 
 Also changed in the same pass: a no-fan-out carve-out for harnesses that forbid
 subagent dispatch, and a Phase 0 rule against re-asking a fork the invocation
 already answered.
+
+## Run 8 - 2026-08-05 (prose-ask re-baseline, priority scenarios)
+
+First results against the prose-ask skill. Source HEAD `7d34830`, installed copy
+verified byte-identical to source `SKILL.md` before the first run. Driver:
+`tests/run-audit.sh`, model **sonnet**. **Cost so far: $4.01** across 8 sessions
+(4 scenarios plus $1.31 of discarded diagnostic runs). Evidence in
+`docs/evidence/run8-*.md`.
+
+Priority order from open item #9: 2 and 10 first, then 15 and 20. The remaining
+14 headless-capable scenarios have not been re-run yet.
+
+| # | Scenario | Status | Evidence | Notes |
+|---|---|---|---|---|
+| 2 | Dirty + unpushed | **Pass** | [run8-02-dirty-unpushed.md](docs/evidence/run8-02-dirty-unpushed.md) | First run ever to get *past* the commit menu. All five options present, described against real repo state. Answered `c`; commit landed, nothing pushed. |
+| 10 | project-tracker present vs absent | **Pass** | [run8-10-project-tracker.md](docs/evidence/run8-10-project-tracker.md) | Both arms run and compared; findings, menu, execution and summary all match. Closes open item #3. |
+| 15 | Phase 0 fork | **Partial** | [run8-15-phase0-fork.md](docs/evidence/run8-15-phase0-fork.md) | **Genuine finding:** the fork was taken silently as pre-answered. See finding #1 below. |
+| 20 | Multi-repo Phase 0 fork | **Pass** | [run8-20-multi-repo-phase0.md](docs/evidence/run8-20-multi-repo-phase0.md) | Scenario's first ever run, and the fullest end-to-end wrap yet: fork before scope, 3 repos, handoff actually written, Phase 4 claims verified against disk. |
+
+**The prediction in the 2026-08-04 note held.** Scenarios 2 and 10 were Partial
+in Run 7 purely because the widget auto-declined; both are clean Passes now, and
+scenario 10's equivalence - never verified in four runs - was settled in two
+sessions. The interesting result is scenario 15, which found something real.
+
+### Finding #1 - a pre-answered Phase 0 fork is taken silently (scenario 15)
+
+Given *"You did (1) and I said let's stop there"*, the session read the wording
+as answering the fork and took **drop the rest**. That is what the 2026-08-04
+rule asks for, and the drop branch's own pass criteria were met (items 2 and 3
+named in the Phase 4 summary, not externalized). But SKILL.md also requires the
+agent to *"state in one line which one you took and why"*, and nothing in the
+first turn does. The user sees the decision only in the closing summary, after
+execution. **A silently-taken branch is indistinguishable from Phase 0 being
+skipped** - scenario 15's first named fail mode.
+
+Two sides to fix, and they are separable:
+
+- **Skill:** the one-line statement is currently a clause inside the
+  pre-answered-fork paragraph. It needs to be load-bearing - the branch
+  announcement is what keeps the rule from reading as "skip Phase 0 when the
+  user sounds decided."
+- **Scenario:** the prompt now contradicts what it tests. Its setup wording
+  ("let's stop there") *is* a pre-answer under the new rule, yet its Expected
+  section asserts the fork must be surfaced. Split it: **15a** with genuinely
+  open wording (the fork must be asked - scenario 20 already covers this shape
+  and passes), and **15b** with explicitly pre-answering wording (the branch must
+  be taken *and announced in one line*). Note this is open item #8a's concern
+  arriving from the opposite direction: not a prompt that leads toward a
+  finding, but one that answers the question under test.
+
+### Harness findings - four defects, all fixed this run
+
+Run 8 spent $1.31 discovering that the harness, not the skill, was the thing
+under test. All four are fixed in `tests/run-audit.sh`; the numbers above are
+from post-fix runs.
+
+1. **The sentinel check passed on wrap's own instructions.** It grepped the
+   whole trace, which contains the `SKILL.md` body echoed back as a user-role
+   Skill tool result - and `SKILL.md` quotes both sentinels verbatim. Every
+   scenario would have reported `PASS sentinel-completed` regardless of what the
+   session actually emitted; the first run "passed" it while ending on a
+   question. Content checks now read assistant-role or result-role lines only.
+2. **Single-shot `-p` can no longer reach past the first question.** Prose
+   asking means the session correctly *stops and waits*; the widget's
+   auto-decline used to let a run continue. The first scenario-2 run ended at
+   the Phase 1 scope confirm having tested nothing. The harness now drives a
+   real multi-turn session (first turn reports a `session_id`, each answer is a
+   `--resume` turn), capped at 10 turns.
+3. **git-bash mangled the prompt.** A bare `/wrap` argument is rewritten to
+   `C:/Program Files/Git/wrap` by MSYS path conversion before the CLI sees it,
+   and the session spends its first turn asking about a stray path. Affects
+   every scenario whose prompt is exactly `/wrap` - 1, 2, 5, 9, 10, 11. Fixed
+   with `MSYS_NO_PATHCONV=1` / `MSYS2_ARG_CONV_EXCL='*'`. **Run 7 ran on the
+   same platform with the same prompts**, so its rows for those six scenarios
+   are suspect beyond the widget explanation already recorded.
+4. **The pollution check false-positived on directory mtimes.** It flagged four
+   unrelated projects as polluted; none had so much as a `memory/` directory -
+   the CLI's own housekeeping touches project dirs. It now snapshots memory
+   *files* and their mtimes, and only fails on a memory write into a project dir
+   that already existed.
+
+Also fixed: scenario 15's fixture never applied task (1) despite the prompt
+claiming it was done (same class as Run 7's scenario 5 date defect), and
+`answer_for` answered lettered menus with prose. The skill's response to both
+was correct and is worth reading - see the scenario 15 evidence file.
 
 ## `--fast` conformance - 2026-06-02
 
@@ -322,21 +408,13 @@ Phase 0 was added as an Outstanding-asks check (fork: finish-first / wrap-with-h
 
 - ~~**8b. Run 7 harness is throwaway / in `/tmp`.**~~ Confirmed lost (checked 2026-08-04; `/tmp/wrap-audit-run7` no longer exists) and replaced by `tests/run-audit.sh`, which is committed, shellcheck-clean, and rebuilds every fixture from scratch. It also fixes the Run 7 fixture defects this file recorded: scenario 5 now backdates with an ISO date (verified landing on 2026-01-05), scenario 8's fixture is multi-repo, and scenario 3/20 fixtures build three repos with real upstreams. The standing "no pollution of the user's real memory directories" criterion is now an enforced assertion rather than a manual observation - the harness snapshots the agent-memory root around every scenario and fails on a write into a pre-existing project dir. Note that the fixture is **not** a sandbox: `bypassPermissions` grants unrestricted tools, and only the memory root is checked. See `tests/README.md` for the residual risk this accepts.
 
-- ~~**7. Multi-repo Phase 0 fork - future scenario candidate.**~~ Written up as scenario 20 in `docs/pressure-scenarios.md` with a fixture in the harness. Not yet *run* - it is part of Run 8 below.
+- ~~**7. Multi-repo Phase 0 fork - future scenario candidate.**~~ Written up as scenario 20 in `docs/pressure-scenarios.md` with a fixture in the harness. **Run 2026-08-05 and passed** - see Run 8.
+
+### Resolved 2026-08-05 (Run 8)
+
+- ~~**3. Re-run scenario 10 with project-tracker registered.**~~ Both arms run and compared: `mcp_servers` carrying a connected project-tracker versus `mcp_servers: []` (via `--strict-mcp-config`, cleaner than the `--settings '{"mcpServers":{}}'` recipe this item proposed). Findings, the five-option menu, the executed commit, and the Phase 4 summary all match. Strongest form of the result: the *present* arm never called a project-tracker tool anyway, reaching for plain git either way. Evidence: [run8-10-project-tracker.md](docs/evidence/run8-10-project-tracker.md). The harness passes the absent arm's flag through `WRAP_AUDIT_CLAUDE_ARGS`.
 
 ### Open
-
-#### 3. Re-run scenario 10 with project-tracker registered
-
-**Unblocked 2026-08-04.** The original blocker is gone: project-tracker is now
-registered as an MCP server and its tools are live in ordinary sessions. What
-remains is the comparison itself - run scenario 10 once with the server
-registered and once with `--settings '{"mcpServers":{}}'`, and confirm the
-user-visible findings, commits, and Phase 4 summary match across the two paths.
-That is the whole point of the tool-agnostic prose, and it has never been
-verified end to end.
-
-**Effort:** small - `tests/run-audit.sh 10` twice with different settings.
 
 #### 8a. Test prompts may still be too leading
 
@@ -355,8 +433,19 @@ which retires the single largest source of "Partial" results but also means no
 scenario has been validated against the current skill. Run 8 is the real
 re-baseline, and `tests/run-audit.sh` now exists to make it repeatable.
 
-**Priority order:** 2 and 3 (the 5-option commit prompt and the tool-path
+**Priority order:** 2 and 10 (the 5-option commit prompt and the tool-path
 equivalence, both previously blocked by the widget), then 15 and 20 (the Phase 0
-fork, which bypass mode could never exercise), then the rest.
+fork, which bypass mode could never exercise), then the rest. (This line
+previously read "2 and 3"; the tool-path equivalence is scenario 10.)
+
+**Status 2026-08-05: the four priority scenarios are done** - see Run 8 above.
+2, 10 and 20 pass; 15 is a Partial that produced finding #1. Four harness
+defects were found and fixed along the way, which is why the priority four cost
+$4.01 rather than the ~$2 the per-scenario rate implies.
+
+**Remaining:** the 14 other headless-capable scenarios (1, 3, 4, 5, 6, 9, 11,
+12, 13, 14, 16, 17, 18, 19). Scenarios 17 and 18 matter most - they are Run 7's
+two outright FAILs, fixed in Run 7b/7c but never re-run against a skill that can
+be answered. Budget roughly $6 to $8 at the observed per-scenario rate.
 
 **Effort:** medium - one focused session plus roughly Run 7's token cost.

@@ -17,17 +17,48 @@ reboot (AUDIT.md open item #8).
 ```
 
 **This costs real money.** Run 7's 20-scenario sweep was $11.13 on the models of
-the day. Start with a couple of scenarios.
+the day; Run 8 averaged about $0.45 per scenario on sonnet, more for multi-repo
+ones. Start with a couple of scenarios.
 
 It tests whatever is installed at your harness's skills directory, not this
 checkout. Install first, or you are auditing the previous version.
+
+### How a scenario is driven
+
+The skill asks in prose (SKILL.md principle 8), so a single `claude -p` run
+stops at the first question - which for most scenarios is Phase 1, long before
+anything interesting. Each scenario is therefore a **multi-turn session**: the
+first turn reports a `session_id`, and every answer is a `--resume` turn against
+it, until a closing sentinel appears or `WRAP_AUDIT_MAX_TURNS` (default 10) is
+reached. Each turn's stream-json is kept as `trace.jsonl.turnN` and concatenated
+into `trace.jsonl`.
+
+Answers come from `answer_for`, which reads what was just asked. A lettered menu
+is answered **with a letter**, never with prose - a generic "approved, go ahead"
+does not map onto `(f)inish first / (w)rap with handoff / (d)rop it`, and the
+skill correctly refuses to choose for the user, so the run stalls on a
+non-answer instead of testing the branch. Preference order is handoff over drop,
+commit over push, leave over destroy; anything unrecognised takes the first
+option. Answers stay neutral for the same reason the invocation prompts do: one
+that names the expected finding cues it and invalidates the run.
+
+Two knobs:
+
+```bash
+WRAP_AUDIT_MAX_TURNS=20 ./run-audit.sh 20        # long multi-repo wraps
+WRAP_AUDIT_CLAUDE_ARGS=--strict-mcp-config ./run-audit.sh 10   # no MCP servers
+```
+
+`WRAP_AUDIT_CLAUDE_ARGS` appends arguments to every turn. Scenario 10 is a
+two-arm comparison - run it once plainly (project-tracker reachable) and once
+with `--strict-mcp-config` (no MCP servers at all), then diff the two traces.
 
 ## What it does and does not decide
 
 The checks are a **mechanical floor**, not the pass criteria:
 
-- every run: no question widget was used (SKILL.md principle 8), exactly one
-  closing sentinel was emitted, and nothing was written into a pre-existing
+- every run: no question widget was used (SKILL.md principle 8), a closing
+  sentinel was emitted, and no memory file was written into a pre-existing
   agent-memory project directory
 - scenario 11: the `# KEEP:` script survived
 - scenario 13: `TaskStop` actually fired
@@ -57,9 +88,12 @@ worth being deliberate about:
   would - `--allowedTools` is not a substitute, since permitting `Bash` at all is
   equivalent to full access.
 - **Wrap writes durable memory by design** (Phase 2a), into the real agent
-  memory root. The harness snapshots that root around every scenario and fails
-  the run on a write into a project directory that already existed; new
-  fixture-owned directories are reported as debris to delete. Point
+  memory root. The harness snapshots every memory file under that root around
+  each scenario and fails the run on a memory write into a project directory
+  that already existed; new fixture-owned directories are reported as debris to
+  delete. (It deliberately does not compare directory mtimes - the CLI's own
+  housekeeping touches project directories and produced four false positives in
+  Run 8.) Point
   `AGENT_SESSIONS_DIR` at the memory root if yours is not `~/.claude/projects`.
 
 Never point this at a real repo.
