@@ -15,9 +15,9 @@ The per-session-hygiene items that run once per touched repo during Phase 3c. Ea
 | Stale memory entries (project-scoped) | Entries in `~/.claude/projects/.../memory/project_*.md` or the project's own memory store that reference fixed issues, dangling files, or superseded decisions | Semantic check against current code. If a claim in the memory is no longer true, propose deletion with evidence (commit/line that invalidated it). |
 | Merged local branches | `git branch --merged main` (excluding `main` itself) | Verify each branch is actually merged, not just name-matched. Propose pruning with `git branch -d`. |
 | Stale worktrees (this session only) | Worktrees created during the session that are no longer needed | Wrap should only touch worktrees it has clear evidence the current session created. Inherited worktrees are untouched. Honor any project keep-warm directive (see "Junk files" → keep-warm carve-out). |
-| `.claude/scripts/` one-offs | Any files present in `.claude/scripts/` | Per the user's AGENTS.md/CLAUDE.md rule, one-offs should be deleted after use unless explicitly kept. Ask per file. |
+| `.claude/scripts/` one-offs | Any files present in `.claude/scripts/` | Per the user's AGENTS.md rule, one-offs should be deleted after use unless explicitly kept. Ask per file. |
 | Junk files (ephemeral build & import artifacts) | Gitignored build/cache dirs **this session generated or refreshed** — Unity `Library/`, `node_modules/`, `target/`, `build/`, `bin/`+`obj/`, `__pycache__/`, etc. **Invisible to `git status`**, so a clean tree does NOT clear this check — scan the tree directly when session activity (ran a build, opened an IDE/Editor, installed deps) implies they exist. | Default recommendation is **keep** — deleting forces regeneration next session. Surface one compact keep-or-clear opt-in finding (dirs + total reclaimable size + per-dir regen cost). Never propose deleting non-regenerable gitignored content. See "Junk files" below. |
-| Docs drift | For any repo this session changed code in, check whether those changes left existing docs stale: README, CLAUDE.md / AGENTS.md, other in-repo docs (ARCHITECTURE.md, wiki pages checked into the repo), and inline doc comments. | Read the doc surfaces relevant to the changed code and compare to what the code now does. Surface stale statements as per-repo opt-in findings (default: surface and let the user approve the edit). This is the catch-net for sessions that changed code but never reached a commit or PR moment where docs-update would normally fire. Use the **docs-update** skill for the per-surface check. |
+| Docs drift | For any repo this session changed code in, check whether those changes left existing docs stale: README, AGENTS.md, other in-repo docs (ARCHITECTURE.md, wiki pages checked into the repo), and inline doc comments. | Read the doc surfaces relevant to the changed code and compare to what the code now does. Surface stale statements as per-repo opt-in findings (default: surface and let the user approve the edit). This is the catch-net for sessions that changed code but never reached a commit or PR moment where docs-update would normally fire. Use the **docs-update** skill for the per-surface check. |
 
 ## Junk files (ephemeral build & import artifacts)
 
@@ -43,7 +43,7 @@ When you cannot tell whether a gitignored dir is regenerable build output or pre
 
 ### Keep-warm carve-out
 
-Some projects deliberately keep build state warm between sessions — e.g. a Unity project that leaves an Editor worktree open so `Library/` doesn't have to re-import. Such a project declares this in its own `CLAUDE.md` / `AGENTS.md` (a "keep worktrees/artifacts warm" directive). Check for that directive before surfacing junk-file or worktree deletion.
+Some projects deliberately keep build state warm between sessions — e.g. a Unity project that leaves an Editor worktree open so `Library/` doesn't have to re-import. Such a project declares this in its own `AGENTS.md` (a "keep worktrees/artifacts warm" directive). Check for that directive before surfacing junk-file or worktree deletion.
 
 When a keep-warm directive is present for the repo:
 

@@ -43,7 +43,7 @@ These run once per touched repo inside Phase 3's loop.
 
 Things the agent figured out about the project — where X lives, why Y is structured that way, what Z actually does.
 
-- **Destination:** project `CLAUDE.md` or `AGENTS.md` if the learning is short and general; project memory otherwise.
+- **Destination:** project `AGENTS.md` if the learning is short and general; project memory otherwise.
 - **Example:** "the `scanner/` module does both discovery and metadata — adapters are the read+write layer".
 
 ### Decisions + rationale
@@ -71,14 +71,14 @@ The current session's TodoWrite list contains items that should persist.
 
 Deploy targets, build times, known quirks, environment constraints specific to this project.
 
-- **Destination:** project memory or `AGENTS.md` (or `CLAUDE.md`).
+- **Destination:** project memory or `AGENTS.md`.
 - **Example:** "builds take ~12 minutes on CI, run `pytest -x` locally for fast iteration".
 
 ### Gotchas / pitfalls hit
 
 Things that went wrong during the session that future agents should avoid.
 
-- **Destination:** `AGENTS.md` (or `CLAUDE.md`) note or code comment at the site.
+- **Destination:** `AGENTS.md` note or code comment at the site.
 - **Example:** "tests fail silently if `ASYNC_MODE=1` is not set; check env before debugging".
 
 ### Work-in-progress code

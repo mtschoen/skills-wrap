@@ -82,11 +82,11 @@ No automated runner — these are manually triggered by running `/wrap` in a ses
 
 **Pass criteria:** No errors. No garbage output. The non-git directory is still mentioned in Phase 4.
 
-### 10. projdash present vs absent
+### 10. project-tracker present vs absent
 
-**Setup:** Run scenario 2 twice: once on a system with `projdash` MCP tools available, once without.
+**Setup:** Run scenario 2 twice: once on a system with `project-tracker` MCP tools available, once without.
 
-**Expected:** Same findings produced, same commits, same Phase 4 summary. The internal path differs (`projdash.find_dirty` vs raw `git status`), but the user-visible output is identical.
+**Expected:** Same findings produced, same commits, same Phase 4 summary. The internal path differs (`project-tracker.find_dirty` vs raw `git status`), but the user-visible output is identical.
 
 **Pass criteria:** Equivalent output across both runs. Confirms tool-agnostic prose.
 

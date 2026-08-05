@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # wrap skill — SessionEnd reminder hook.
 # Prints a one-line nudge if the current cwd has wrap-worthy state.
-# Rate-limited to once per 5 minutes via ~/.claude/wrap-nudge-last-fired.
+# Rate-limited to once per 5 minutes via ~/.agents/wrap/nudge-last-fired.
 # Must exit 0 always. Never blocks or invokes wrap.
 
 set -u
 
-MARKER="$HOME/.claude/wrap-nudge-last-fired"
+MARKER="$HOME/.agents/wrap/nudge-last-fired"
 RATE_LIMIT_SECONDS=300
 
 # Rate limit: skip if marker is recent

@@ -1,6 +1,6 @@
 # wrap skill — SessionEnd reminder hook (Windows).
 # Prints a one-line nudge if the current cwd has wrap-worthy state.
-# Rate-limited to once per 5 minutes via ~/.claude/wrap-nudge-last-fired.
+# Rate-limited to once per 5 minutes via ~/.agents/wrap/nudge-last-fired.
 # Must exit 0 always. Never blocks or invokes wrap.
 
 $ErrorActionPreference = 'SilentlyContinue'
@@ -8,7 +8,7 @@ $ErrorActionPreference = 'SilentlyContinue'
 # Ensure the ⚠ character renders correctly on Windows consoles (otherwise prints as `?`)
 try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
 
-$Marker = Join-Path $HOME '.claude/wrap-nudge-last-fired'
+$Marker = Join-Path $HOME '.agents/wrap/nudge-last-fired'
 $RateLimitSeconds = 300
 
 # Rate limit

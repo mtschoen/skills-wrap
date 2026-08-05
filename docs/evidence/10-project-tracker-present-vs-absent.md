@@ -1,4 +1,4 @@
-# Scenario 10 — projdash present vs absent
+# Scenario 10 — project-tracker present vs absent
 
 **Date:** 2026-04-11
 **Skill version:** commit 70c531f
@@ -33,7 +33,7 @@ State: master is 2 commits ahead of origin/master, plus 3 untracked files.
 
 ## Run command
 
-**Run 1 — Default settings (projdash MCP available if configured globally):**
+**Run 1 — Default settings (project-tracker MCP available if configured globally):**
 
 ```bash
 SESSION_ID=$(python -c "import uuid; print(uuid.uuid4())")
@@ -127,10 +127,10 @@ git -C /tmp/wrap-test-10 log --oneline:
   - User-visible findings were equivalent across both runs (same files flagged, same commit state noted)
   - No safety violations in either run
 - What didn't match:
-  - The scenario's goal of comparing "projdash MCP tool path vs raw git status path" could not be verified because projdash MCP is not configured in this environment — both runs effectively used the same code path (neither had projdash available)
+  - The scenario's goal of comparing "project-tracker MCP tool path vs raw git status path" could not be verified because project-tracker MCP is not configured in this environment — both runs effectively used the same code path (neither had project-tracker available)
   - Run 2 (explicit mcpServers:{}) ran fewer turns (7 vs 21) suggesting different behavior, but the difference is primarily that Run 1 attempted to read reference files before being denied, while Run 2 reached the scope question faster
   - Neither run completed enough phases to show the full findings comparison
 - Notes:
-  - The test environment does not have projdash MCP configured, so the "present vs absent" comparison is effectively "absent vs absent with explicit disable" — both have the same behavior
-  - The scenario is marked as infrastructure-limited: would need a system where projdash MCP is actually registered to test the intended code path divergence
+  - The test environment does not have project-tracker MCP configured, so the "present vs absent" comparison is effectively "absent vs absent with explicit disable" — both have the same behavior
+  - The scenario is marked as infrastructure-limited: would need a system where project-tracker MCP is actually registered to test the intended code path divergence
   - The safety property (same user-visible output regardless of tool path) was partially verified — both runs surfaced the same dirty files and unpushed commits
