@@ -10,7 +10,7 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
-# aislop tool state (session artifacts); keep only the shared settings file.
-# Unanchored so nested dirs (tests/.aislop/) are covered too.
+# aislop runtime artifacts (session/history logs, caches, baselines).
+# Unanchored so nested project directories are covered too.
 **/.aislop/*
-!**/.aislop/settings.json
+!**/.aislop/config.yml
