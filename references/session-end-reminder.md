@@ -8,7 +8,7 @@ Checks the session's final `cwd` for wrap-worthy signals:
 
 1. Working tree dirty? (`git status --porcelain` non-empty)
 2. Unpushed commits? (`git log @{u}..HEAD` non-empty, if upstream exists)
-3. Any files present in `.claude/scripts/`?
+3. Any files present in ignored folders like `.claude/scripts/`?
 
 If any fire, prints a single-line reminder. Otherwise prints nothing.
 
