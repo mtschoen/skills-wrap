@@ -14,6 +14,8 @@ reboot (AUDIT.md open item #8).
 ./run-audit.sh                   # every headless-capable scenario
 ./run-audit.sh -m opus 17 18 19  # named scenarios, specific model
 ./run-audit.sh -o ~/wrap-audit-run8   # keep fixtures somewhere findable
+./run-audit.sh -c 2 15           # clean room: wrap without your own config
+./run-audit.sh -C 2 15           # control: the same fixtures, no wrap at all
 ```
 
 **This costs real money.** Run 7's 20-scenario sweep was $11.13 on the models of
@@ -52,6 +54,66 @@ WRAP_AUDIT_CLAUDE_ARGS=--strict-mcp-config ./run-audit.sh 10   # no MCP servers
 `WRAP_AUDIT_CLAUDE_ARGS` appends arguments to every turn. Scenario 10 is a
 two-arm comparison - run it once plainly (project-tracker reachable) and once
 with `--strict-mcp-config` (no MCP servers at all), then diff the two traces.
+Run that comparison in the **default** mode: clean-room mode passes
+`--strict-mcp-config` on every turn, so both arms would be the MCP-less one.
+
+## Clean-room mode (`-c`) and the control (`-C`)
+
+By default a scenario runs inside **your** agent configuration, and measures
+skill-plus-environment rather than the skill. On the machine this harness was
+written on, the default mode gives every fixture session 57 installed skills in
+its system prompt and a `SessionStart` hook that injects *"if you think there is
+even a 1% chance a skill might apply, you ABSOLUTELY MUST invoke the skill"*.
+Someone who installs wrap on its own gets none of that, so compliance measured
+this way may be the environment talking.
+
+`-c` runs the same scenarios with the operator stripped out:
+
+| lever | what it removes |
+| --- | --- |
+| `--setting-sources project` | user-level settings, so the hooks, and with them every user-installed skill (57 to 17 here) |
+| `--strict-mcp-config` | user-scope MCP servers, so project-tracker is genuinely absent |
+| `--plugin-dir` | re-supplies wrap alone, as the plugin a third party installs |
+
+Two consequences to keep in mind:
+
+- **`-c` audits this checkout, not what you installed.** It builds the plugin
+  tree with `scripts/build-plugin.sh` at run start. That is the opposite of the
+  default mode's rule, and the banner says which one you are in. Point
+  `WRAP_AUDIT_PLUGIN_DIR` at an existing tree to audit that instead.
+- **A plugin skill is namespaced**, so the clean room is driven with
+  `/wrap:wrap`. A bare `/wrap` resolves to nothing and the session improvises a
+  wrap-shaped answer from the skill's one-line description - which reads like a
+  pass while testing nothing. The harness rewrites the prompts for you.
+
+`-C` is the control: identical isolation, no wrap at all, and `/wrap` in the
+prompt becomes "Let's wrap up the session." It answers what the base model does
+unaided, which is the only way to tell skill behaviour from model behaviour.
+Having no sentinel to emit, a control always runs to the turn cap, so the cap
+defaults to 4 there rather than 10 - the later turns are only the harness
+prodding a session that already finished. `WRAP_AUDIT_MAX_TURNS` still wins.
+Its behaviour checks are printed `CTRL-` prefixed and are not a pass bar - a
+control that emits no closing sentinel is the finding, not a defect. The
+isolation checks still bind: a control that could still see wrap is broken.
+
+Every non-default run checks its own room from the trace, per scenario, since
+the alternative is trusting a flag that may have silently stopped applying: no
+hook fired other than wrap's own `SessionEnd` nudge, the `init` line lists
+`wrap:wrap` (or, for a control, no wrap), and no MCP server is attached.
+
+### What clean-room mode does not strip
+
+Your `~/.claude/CLAUDE.md` and anything it imports **still reach the session** -
+settings sources govern settings, not memory files. A clean-room probe on this
+machine still knew the operator's Gitea conventions and "full send" safe word.
+
+Removing those needs a separate config directory, which relocates settings,
+skills and the memory root in one move. Set `WRAP_AUDIT_CONFIG_DIR` to one and
+the harness exports it as `CLAUDE_CONFIG_DIR` and retargets the memory-pollution
+snapshot into it. Provisioning it is left to you deliberately: a fresh config
+dir has no credentials, so it needs either `claude /login` run against it once
+or an `ANTHROPIC_API_KEY` in the environment (which bills the API rather than a
+subscription). This script will not copy your credentials anywhere.
 
 ## What it does and does not decide
 

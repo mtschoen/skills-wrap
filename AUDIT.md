@@ -25,6 +25,43 @@ Also changed in the same pass: a no-fan-out carve-out for harnesses that forbid
 subagent dispatch, and a Phase 0 rule against re-asking a fork the invocation
 already answered.
 
+## Clean-room mode - 2026-08-05 (harness, open item #10)
+
+Every result below Run 8 was produced inside the operator's own configuration.
+`tests/run-audit.sh -c` now runs a scenario without it, and `-C` runs the same
+fixture with no wrap at all. Built and validated for **$0.9** of probes plus one
+live scenario; no scenario results yet - that measurement is still owed.
+
+**What the levers actually do**, measured rather than assumed. A probe session
+was asked to count its own skills, and the stream's `init` line was read for the
+authoritative list:
+
+| configuration | skills in the session | operator hooks | MCP |
+| --- | --- | --- | --- |
+| default (installed mode) | 57 | `SessionStart` fires, injecting the full "1% chance ... you ABSOLUTELY MUST invoke the skill" text | project-tracker et al |
+| `--setting-sources project` | 17, **wrap not among them** | none | attached |
+| `-c` (adds `--strict-mcp-config --plugin-dir`) | 17 + `wrap:wrap` | none | none |
+
+So one flag removes the hooks, the 45-odd user-installed skills, *and* wrap
+itself; the plugin re-supplies wrap alone. The 17 that remain ship with the CLI,
+so a third party has them too.
+
+**Two findings worth the price:**
+
+- **A plugin skill is namespaced.** In the clean room the skill registers as
+  `wrap:wrap`, and a bare `/wrap` resolves to nothing at all. The session does
+  not error - it improvises a wrap-shaped answer from the one-line description,
+  phase numbering and all, and the trace reads like a pass while measuring
+  nothing. Cost $0.25 to spot; caught only by grepping the trace for SKILL.md's
+  own sentinel text and finding it absent. The harness rewrites the prompts, and
+  every non-default run now asserts `wrap:wrap` is in the `init` line.
+- **The clean room is not fully clean.** `~/.claude/CLAUDE.md` and the global
+  `AGENTS.md` it imports still reach the session - a clean-room probe still knew
+  the operator's Gitea conventions and safe word. Settings sources govern
+  settings, not memory files. Closing that needs a separate `CLAUDE_CONFIG_DIR`;
+  the harness honours `WRAP_AUDIT_CONFIG_DIR` if you provision one, and
+  deliberately does not copy credentials into it for you.
+
 ## Run 8b - 2026-08-05 (ask-design change + verification)
 
 Run 8's finding #1 and the user's own question - *"is there a better alternative
@@ -518,28 +555,31 @@ Phase 0 was added as an Outstanding-asks check (fork: finish-first / wrap-with-h
 
 ### Open
 
-#### 10. Clean-room mode - measure the skill, not the operator's environment
+#### 10. Clean-room mode - the room is built, the measurements are not
 
-Every scenario to date runs inside the operator's own agent configuration. The
-`SessionStart` hook injects the full `using-superpowers` text into all 18 Run 8
-traces, and the system prompt lists roughly forty installed skills. A third
-party who installs wrap on its own gets neither, so nothing measured so far
-describes wrap standalone.
+**The mechanism shipped 2026-08-05** (see "Clean-room mode" above):
+`tests/run-audit.sh -c` strips the operator's hooks, their 45-odd installed
+skills and their MCP servers and re-supplies wrap alone as a plugin; `-C` is the
+same room with no wrap, for the control. Each non-default run verifies its own
+isolation from the trace rather than trusting the flags. Scenario 1 passes clean
+room in one turn at $0.18, so the per-scenario rate is no worse than installed
+mode.
 
-Two candidate levers, neither tried: `--setting-sources` (choose among
-`user,project,local`, so user-level hooks can be excluded) and a scratch
-`CLAUDE_CONFIG_DIR` holding only wrap. The second is the more complete
-isolation - it would relocate the skills directory, the settings, and the memory
-root in one move, which incidentally retires the pollution risk that
-`tests/README.md` currently documents as accepted.
+**What is still owed, and it is the part that matters:**
 
-Worth a **control run** too: the same fixture with no wrap installed at all,
-to establish what the model does unaided. Several Run 8 passes (correct sentinel
-discipline, refusing to guess between options) may be model behaviour rather
-than skill behaviour, and there is currently no way to tell.
+- Re-run the scenarios that carry real weight (2, 15, 20, 21, then 17 and 18)
+  in `-c`, and see whether any Run 8/8b verdict moves. Roughly $3 to $5.
+- Run the **control** on the same fixtures. Several Run 8 passes - sentinel
+  discipline, refusing to guess between options - may be base-model behaviour;
+  until the control runs there is no way to attribute them.
+- Decide what to do about the residual leak: the operator's `~/.claude/CLAUDE.md`
+  and global `AGENTS.md` still reach a `-c` session. Provisioning a
+  `WRAP_AUDIT_CONFIG_DIR` closes it (the harness already honours the variable)
+  but needs its own credentials - `claude /login` against that config dir, or an
+  `ANTHROPIC_API_KEY`, which bills the API instead of a subscription.
 
-**Effort:** medium. Do it before treating any pass rate as a property of the
-skill.
+**Effort:** medium, now mostly spend rather than build. Do it before treating
+any pass rate as a property of the skill.
 
 #### 8a. Test prompts may still be too leading
 

@@ -5,7 +5,7 @@
 # the installed skill against it headlessly, and checks the captured tool trace.
 # Replaces the Run 7 harness that lived in /tmp and did not survive a reboot.
 #
-# Usage:  ./run-audit.sh [-m MODEL] [-o OUTDIR] [-l] [SCENARIO...]
+# Usage:  ./run-audit.sh [-m MODEL] [-o OUTDIR] [-c|-C] [-l] [SCENARIO...]
 # See README.md in this directory before running - this costs real money.
 
 set -euo pipefail
@@ -13,6 +13,9 @@ set -euo pipefail
 MODEL="${WRAP_AUDIT_MODEL:-sonnet}"
 OUTDIR=""
 LIST_ONLY=0
+
+# installed | clean | control. See "clean-room mode" below and README.md.
+MODE="installed"
 
 # Scenarios that need a live interactive session (a real Ctrl+C, a real mid-wrap
 # merge conflict). A headless -p run cannot produce them, so they are reported as
@@ -28,6 +31,8 @@ Usage: ./run-audit.sh [options] [SCENARIO...]
 Options:
   -m MODEL   model to drive the wrap with (default: sonnet)
   -o OUTDIR  where to write fixtures + traces (default: a fresh mktemp dir)
+  -c         clean-room: run wrap alone, without the operator's own config
+  -C         control: clean-room with no wrap at all, to see the model unaided
   -l         list scenarios and exit
   -h         this help
 
@@ -35,10 +40,12 @@ With no SCENARIO arguments, every headless-capable scenario runs.
 EOF
 }
 
-while getopts ":m:o:lh" opt; do
+while getopts ":m:o:cClh" opt; do
 	case "$opt" in
 	m) MODEL="$OPTARG" ;;
 	o) OUTDIR="$OPTARG" ;;
+	c) MODE="clean" ;;
+	C) MODE="control" ;;
 	l) LIST_ONLY=1 ;;
 	h)
 		usage
@@ -104,6 +111,60 @@ mkdir -p "$OUTDIR"
 
 REQUESTED="$*"
 [ -n "$REQUESTED" ] || REQUESTED="$ALL_SCENARIOS"
+
+# ---------------------------------------------------------------------------
+# clean-room mode (AUDIT.md open item #10)
+#
+# The default mode measures skill-plus-environment: every headless session
+# inherits the operator's own configuration, so their SessionStart hooks fire
+# inside it and their whole installed skill set is listed in its system prompt.
+# On the machine this was written on that is 57 skills and a hook injecting
+# "if you think there is even a 1% chance a skill might apply, you ABSOLUTELY
+# MUST invoke the skill" - none of which a third party installing wrap gets.
+#
+# -c strips it back to wrap plus the CLI's own built-ins:
+#   --setting-sources project  drops user-level settings, hence the hooks, and
+#                              with them every user-installed skill (57 -> ~17)
+#   --strict-mcp-config        drops user-scope MCP servers (project-tracker)
+#   --plugin-dir               re-supplies wrap, from THIS CHECKOUT, as the
+#                              plugin a third party would install
+#
+# -C is the same isolation with no wrap at all: the control that says which
+# behaviours are the skill and which were the base model all along.
+#
+# What this does NOT strip: the operator's ~/.claude/CLAUDE.md and the global
+# AGENTS.md it imports still reach the session (verified - a clean-room probe
+# still knew the operator's Gitea conventions). Settings sources do not govern
+# memory files. Removing those needs a separate config dir, which the harness
+# will use if you provision one and point WRAP_AUDIT_CONFIG_DIR at it; see
+# README.md, "Clean-room mode". This script deliberately does not copy your
+# credentials anywhere to make that happen.
+# ---------------------------------------------------------------------------
+
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+MODE_ARGS=()
+PLUGIN_DIR=""
+
+if [ "$MODE" != "installed" ]; then
+	MODE_ARGS=(--setting-sources project --strict-mcp-config)
+
+	if [ -n "${WRAP_AUDIT_CONFIG_DIR:-}" ]; then
+		export CLAUDE_CONFIG_DIR="$WRAP_AUDIT_CONFIG_DIR"
+		SESSIONS_ROOT_OVERRIDE="$WRAP_AUDIT_CONFIG_DIR/projects"
+	fi
+fi
+
+if [ "$MODE" = "clean" ]; then
+	PLUGIN_DIR="${WRAP_AUDIT_PLUGIN_DIR:-$OUTDIR/plugin}"
+	if [ -z "${WRAP_AUDIT_PLUGIN_DIR:-}" ]; then
+		"$REPO_ROOT/scripts/build-plugin.sh" "$PLUGIN_DIR" >/dev/null
+	fi
+	[ -f "$PLUGIN_DIR/skills/wrap/SKILL.md" ] || {
+		echo "error: no wrap skill under $PLUGIN_DIR" >&2
+		exit 1
+	}
+	MODE_ARGS+=(--plugin-dir "$PLUGIN_DIR")
+fi
 
 # ---------------------------------------------------------------------------
 # fixture helpers
@@ -345,6 +406,21 @@ scenario_prompt() {
 	esac
 }
 
+# The invocation token is mode-dependent. A plugin skill is namespaced, so the
+# clean room answers to `/wrap:wrap` and a bare `/wrap` silently resolves to
+# nothing - the session then improvises a plausible-looking wrap out of the
+# skill's one-line description, which reads like a pass and tests nothing (cost
+# $0.25 to discover). The control has no skill to name at all, so it gets the
+# plain-English ask a user would type if they had never installed one.
+adapt_prompt() {
+	local prompt="$1"
+	case "$MODE" in
+	clean) printf '%s' "${prompt//"/wrap"/"/wrap:wrap"}" ;;
+	control) printf '%s' "${prompt//"/wrap"/"Let's wrap up the session."}" ;;
+	*) printf '%s' "$prompt" ;;
+	esac
+}
+
 # ---------------------------------------------------------------------------
 # multi-turn driver
 #
@@ -357,7 +433,15 @@ scenario_prompt() {
 
 SENTINEL_DONE="That's a /wrap. Go ahead and close the session."
 SENTINEL_INTERRUPTED="That was an interrupted /wrap"
-MAX_TURNS="${WRAP_AUDIT_MAX_TURNS:-10}"
+# A control has no skill and so never emits a sentinel: it runs to the cap every
+# time, and the turns after it has said its piece are the harness prodding an
+# already-finished session with "approved, go ahead". Four is enough to see what
+# the unaided model does; raise it explicitly if a control needs more room.
+if [ "$MODE" = "control" ]; then
+	MAX_TURNS="${WRAP_AUDIT_MAX_TURNS:-4}"
+else
+	MAX_TURNS="${WRAP_AUDIT_MAX_TURNS:-10}"
+fi
 
 # Extra CLI arguments for every turn, word-split. Scenario 10 is a two-arm
 # comparison (project-tracker reachable vs not) and the second arm is
@@ -454,6 +538,7 @@ drive_session() {
 			cd "$start_dir" &&
 				MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL='*' \
 					claude -p "$input" "${resume_args[@]+"${resume_args[@]}"}" \
+					"${MODE_ARGS[@]+"${MODE_ARGS[@]}"}" \
 					"${EXTRA_CLAUDE_ARGS[@]+"${EXTRA_CLAUDE_ARGS[@]}"}" \
 					--permission-mode bypassPermissions \
 					--output-format stream-json --verbose \
@@ -497,7 +582,7 @@ trace_has_tool() { assistant_lines "$1" | grep -qE "\"name\": ?\"$2\""; }
 # confine the run to the fixture, and wrap's Phase 2a writes cross-project memory
 # by design, so a run can land in the operator's real corpus. Snapshot it and
 # report, per AUDIT.md's standing "no pollution of real memory dirs" criterion.
-SESSIONS_ROOT="${AGENT_SESSIONS_DIR:-$HOME/.claude/projects}"
+SESSIONS_ROOT="${SESSIONS_ROOT_OVERRIDE:-${AGENT_SESSIONS_DIR:-$HOME/.claude/projects}}"
 
 # Two record types: which project dirs exist, and the mtime of every memory
 # file inside them. Snapshotting the *directory* mtime instead reported
@@ -557,6 +642,60 @@ generic_checks() {
 	else
 		echo "FAIL sentinel-missing"
 	fi
+}
+
+# Isolation is a claim until the trace proves it, and the stream says so
+# directly: the `init` line lists the session's skills, plugins and MCP servers,
+# and every hook that fires announces itself as a `hook_started` event naming its
+# event. Both are checked per scenario so a run can never quietly report a clean
+# room it did not get - a stale plugin path or a settings-source flag the CLI
+# stopped honouring would otherwise look identical to a real one.
+cleanroom_checks() {
+	local trace="$1" init hook_events skills
+	init="$(grep -m1 '"subtype":"init"' "$trace.turn1" || true)"
+	if [ -z "$init" ]; then
+		echo "FAIL cleanroom-unverified (no init line in turn 1)"
+		return
+	fi
+
+	# wrap ships its own SessionEnd nudge, which belongs in the clean room.
+	# Anything else that fires came from the operator's settings.
+	hook_events="$(grep -o '"hook_event":"[^"]*"' "$trace" |
+		cut -d'"' -f4 | grep -v '^SessionEnd$' | sort -u | tr '\n' ' ')"
+	if [ -n "${hook_events// /}" ]; then
+		echo "FAIL cleanroom-operator-hooks-fired ($hook_events)"
+	else
+		echo "PASS cleanroom-no-operator-hooks"
+	fi
+
+	skills="$(grep -o '"skills":\[[^]]*\]' <<<"$init")"
+	if [ "$MODE" = "control" ]; then
+		if grep -q 'wrap' <<<"$skills"; then
+			echo "FAIL control-not-blind (wrap was still available)"
+		else
+			echo "PASS control-no-wrap"
+		fi
+	elif grep -q '"wrap:wrap"' <<<"$skills"; then
+		echo "PASS cleanroom-wrap-loaded"
+	else
+		echo "FAIL cleanroom-wrap-missing (the run measured nothing)"
+	fi
+
+	if grep -q '"mcp_servers":\[\]' <<<"$init"; then
+		echo "PASS cleanroom-no-mcp"
+	else
+		echo "FAIL cleanroom-mcp-present"
+	fi
+
+	# Not a pass criterion - the built-ins ship with the CLI, so a third party
+	# has them too. Recorded because the count is the honest description of what
+	# "clean" meant on the day, and it moves with CLI releases.
+	local listed=0
+	case "$skills" in
+	'"skills":[]') listed=0 ;;
+	*) listed=$(($(grep -o '","' <<<"$skills" | wc -l) + 1)) ;;
+	esac
+	echo "NOTE $listed skill(s) listed in this session"
 }
 
 scenario_checks() {
@@ -634,7 +773,17 @@ scenario_checks() {
 # run
 # ---------------------------------------------------------------------------
 
-echo "wrap audit: model=$MODEL outdir=$OUTDIR"
+echo "wrap audit: model=$MODEL outdir=$OUTDIR mode=$MODE"
+case "$MODE" in
+clean)
+	echo "clean room: wrap from $PLUGIN_DIR (this checkout, NOT what you installed)"
+	;;
+control)
+	echo "control: no wrap installed - these runs show the model unaided, and"
+	echo "the checks below are observations, not a pass bar."
+	;;
+esac
+[ -z "${CLAUDE_CONFIG_DIR:-}" ] || echo "config dir: $CLAUDE_CONFIG_DIR"
 echo
 
 pass_count=0
@@ -654,7 +803,7 @@ for n in $REQUESTED; do
 	root="$OUTDIR/wrap-test-$(printf '%02d' "$n")-$slug"
 	mkdir -p "$root"
 	start_dir="$(build_fixture "$n" "$root")"
-	prompt="$(scenario_prompt "$n")"
+	prompt="$(adapt_prompt "$(scenario_prompt "$n")")"
 	trace="$root/trace.jsonl"
 
 	echo "--- scenario $n ($slug)"
@@ -670,9 +819,20 @@ for n in $REQUESTED; do
 	printf '    %s turn(s), $%s\n' "$TURNS" \
 		"$(result_lines "$trace" | grep -oE '"total_cost_usd":[0-9.]+' |
 			cut -d: -f2 | awk '{ total += $1 } END { printf "%.2f", total }')"
-	results="$(
+	# In a control run every behaviour check is the question rather than the bar -
+	# a missing sentinel is the finding, not a defect - so they are relabelled
+	# CTRL- and kept out of the count. The isolation checks still bind: a control
+	# that could see wrap is a broken control.
+	behaviour="$(
 		generic_checks "$trace"
 		scenario_checks "$n" "$trace" "$start_dir"
+	)"
+	if [ "$MODE" = "control" ]; then
+		behaviour="CTRL-${behaviour//$'\n'/$'\n'CTRL-}"
+	fi
+	results="$(
+		[ "$MODE" = "installed" ] || cleanroom_checks "$trace"
+		printf '%s\n' "$behaviour"
 		pollution_checks "$root/sessions.before" "$root/sessions.after"
 	)"
 	while IFS= read -r line; do printf '    %s\n' "$line"; done <<<"$results"
@@ -685,7 +845,11 @@ for n in $REQUESTED; do
 done
 
 echo
-echo "checked: $pass_count pass, $fail_count fail"
+if [ "$MODE" = "control" ]; then
+	echo "control: $pass_count scenario(s) observed, $fail_count with a broken room"
+else
+	echo "checked: $pass_count pass, $fail_count fail"
+fi
 if [ -n "$skipped" ]; then
 	echo "skipped (need a live interactive session, not headless):$skipped"
 fi
