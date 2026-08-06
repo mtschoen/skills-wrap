@@ -1,7 +1,7 @@
-# Scenario 14 — Subagent output contains loose thread (v2, redesigned)
+# Scenario 14 - Subagent output contains loose thread (v2, redesigned)
 
 **Date:** 2026-04-20
-**Skill version:** commit `55a4139` (Phase 1b as initially drafted — "still running" wording pre-fix)
+**Skill version:** commit `55a4139` (Phase 1b as initially drafted - "still running" wording pre-fix)
 **Run mode:** claude -p, --permission-mode bypassPermissions, **--output-format stream-json --verbose**
 **Session id:** `777cc11e-b67f-4e3f-b6d2-d1e6eb013621`
 
@@ -53,7 +53,7 @@ Exit: 0. Duration: 57989 ms wall. Turns: 5. Cost: $0.65.
 ```text
 0. Agent        subagent_type=general-purpose, run_in_background=True, desc='Analyze fetcher timeout handling'
 1. Skill        wrap
-2. TEXT         "I'll run the wrap procedure. Phase 0 first — detect scope. I haven't edited any files this session. The only active work is the background subagent I just dispatched..."
+2. TEXT         "I'll run the wrap procedure. Phase 0 first - detect scope. I haven't edited any files this session. The only active work is the background subagent I just dispatched..."
 3. ToolSearch   select:AskUserQuestion
 4. TEXT         "The background subagent completed on its own while I was loading the question tool, so Phase 1b's only candidate is gone. Nothing else to sweep."
 5. RESULT       "Nothing to wrap..."
@@ -65,9 +65,9 @@ Exit: 0. Duration: 57989 ms wall. Turns: 5. Cost: $0.65.
 
 > The background subagent completed on its own while I was loading the question tool, so Phase 1b's only candidate is gone. Nothing else to sweep.
 >
-> **Phase 2 — Per-repo loop.** No touched repos (the session only read files via the subagent). Skip.
+> **Phase 2 - Per-repo loop.** No touched repos (the session only read files via the subagent). Skip.
 >
-> **Phase 3 — Summary.**
+> **Phase 3 - Summary.**
 >
 > Nothing to wrap. `wrap-test-14b` is clean (no edits this session), no memory items to offload, and the one background subagent (`a32c53d347ac29638`, fetcher.py timeout analysis) finished on its own before needing cleanup. Its output is preserved in the task transcript for your reference.
 
@@ -83,15 +83,15 @@ src/fetcher.py           (only file)
 
 **Status: Fail (with root cause identified and skill fix applied).**
 
-This is the failure mode scenario 14 is designed to catch. The agent *explicitly* noted the subagent's output exists ("preserved in the task transcript for your reference") and *explicitly* chose not to scan it, citing that the subagent "completed on its own" and is therefore "gone" as a 1b candidate. The subagent's actual analysis — which contained real architectural observations about `src/fetcher.py` — was never read, never offloaded, never even inspected.
+This is the failure mode scenario 14 is designed to catch. The agent *explicitly* noted the subagent's output exists ("preserved in the task transcript for your reference") and *explicitly* chose not to scan it, citing that the subagent "completed on its own" and is therefore "gone" as a 1b candidate. The subagent's actual analysis - which contained real architectural observations about `src/fetcher.py` - was never read, never offloaded, never even inspected.
 
-**Root cause:** SKILL.md's Phase 1b originally read *"In-flight Task/Agent subagents still running in the background — TaskStop if not finishing imminently."* The word *"still running"* gave the agent a defensible exit when the subagent completed between dispatch and wrap. But the scenario 14 spec — and the safety rule behind it — says the window is *"running or just completed but not yet harvested."* The skill's wording didn't encode that.
+**Root cause:** SKILL.md's Phase 1b originally read *"In-flight Task/Agent subagents still running in the background - TaskStop if not finishing imminently."* The word *"still running"* gave the agent a defensible exit when the subagent completed between dispatch and wrap. But the scenario 14 spec - and the safety rule behind it - says the window is *"running or just completed but not yet harvested."* The skill's wording didn't encode that.
 
 **Skill fixes applied in the same commit that added this evidence:**
 
-1. **Phase 1b scope broadened:** scanning now explicitly covers *recently-completed-but-unharvested* tasks, not just ones currently running. A subagent that finished two seconds ago has the same loose-thread potential as one still mid-execution — the moment of completion is arbitrary; what matters is whether the output has been absorbed yet.
+1. **Phase 1b scope broadened:** scanning now explicitly covers *recently-completed-but-unharvested* tasks, not just ones currently running. A subagent that finished two seconds ago has the same loose-thread potential as one still mid-execution - the moment of completion is arbitrary; what matters is whether the output has been absorbed yet.
 
-2. **`KillShell` → `TaskStop`.** Same platform unification noted in 13b — background shells and subagents both terminate via `TaskStop` in the current harness.
+2. **`KillShell` → `TaskStop`.** Same platform unification noted in 13b - background shells and subagents both terminate via `TaskStop` in the current harness.
 
 3. **`BashOutput` → `TaskOutput`** in Phase 1a's conversation-review step.
 
@@ -101,7 +101,7 @@ After the fixes, wrap should:
 
 - Call `TaskOutput` on the subagent's task_id, read the analysis it produced.
 - Identify the architectural opinions as candidate loose threads (they're observations about the code that aren't themselves in the code).
-- Propose offloading via `AskUserQuestion` — to a plan file, memory entry, or issue.
+- Propose offloading via `AskUserQuestion` - to a plan file, memory entry, or issue.
 - On approval, `Write` the offload destination.
 - Only then acknowledge the subagent's completion.
 

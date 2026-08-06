@@ -1,4 +1,4 @@
-# Scenario 8 — User cancels mid-run during Phase 2
+# Scenario 8 - User cancels mid-run during Phase 2
 
 **Date:** 2026-04-11
 **Skill version:** commit 70c531f
@@ -37,7 +37,7 @@ timeout 30 claude -p "/wrap" \
 echo "Exit: $?"
 ```
 
-**Exit code: 124** (timeout). Output file was empty (0 bytes) — the session had not yet produced any JSON output when killed.
+**Exit code: 124** (timeout). Output file was empty (0 bytes) - the session had not yet produced any JSON output when killed.
 
 **Run 2 (natural run with AskUserQuestion denied, simulating user abort):**
 
@@ -93,11 +93,11 @@ git -C /tmp/wrap-test-08-c log --oneline: initial
 
 - **Result:** Partial
 - What matched the pass criteria:
-  - No data loss — all 3 repos remained intact with their pre-wrap state preserved
+  - No data loss - all 3 repos remained intact with their pre-wrap state preserved
   - When AskUserQuestion was denied (simulating user cancel), the skill stopped cleanly without any destructive actions
   - Already-started work (in this case, nothing had been committed yet) was left intact
 - What didn't match:
-  - Scenario spec requires cancel "mid-run during Phase 2 of repo #2" — this requires interactive control to cancel at a specific sub-phase
+  - Scenario spec requires cancel "mid-run during Phase 2 of repo #2" - this requires interactive control to cancel at a specific sub-phase
   - Phase 3 summary showing "completed: repo 1 (all phases); partial: repo 2 (through sub-phase 2a); not reached: repo 3" was not produced because the session ended before Phase 2 began
   - The timeout approach (timeout 30) produced no output at all (JSON format buffers until completion)
 - Notes:

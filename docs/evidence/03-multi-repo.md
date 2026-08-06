@@ -1,4 +1,4 @@
-# Scenario 3 — Multi-repo session, 3 repos touched
+# Scenario 3 - Multi-repo session, 3 repos touched
 
 **Date:** 2026-04-11
 **Skill version:** commit 70c531f
@@ -62,9 +62,9 @@ Exit: 0
     {
       "tool_name": "AskUserQuestion",
       "questions": [
-        "wrap-test-03-a — README.md modified (unstaged), no upstream. Action?",
-        "wrap-test-03-b — README.md modified (unstaged). Action?",
-        "wrap-test-03-c — README.md already staged. Action?"
+        "wrap-test-03-a - README.md modified (unstaged), no upstream. Action?",
+        "wrap-test-03-b - README.md modified (unstaged). Action?",
+        "wrap-test-03-c - README.md already staged. Action?"
       ]
     }
   ]
@@ -108,5 +108,5 @@ No commits were made because the AskUserQuestion (Phase 2d) was denied by --perm
   - Bash tool calls for git status on repos B and C were also denied (Bash is not auto-approved either)
 - Notes:
   - 31 turns consumed; significant effort spent attempting git status calls via various path formats before giving up
-  - The multi-repo question batching worked well — all 3 repos in one AskUserQuestion call rather than sequential single-repo questions
+  - The multi-repo question batching worked well - all 3 repos in one AskUserQuestion call rather than sequential single-repo questions
   - Limitation: --permission-mode acceptEdits only auto-approves file-edit tools (Write/Edit), not Bash or AskUserQuestion. For full scenario validation, interactive testing or stream-json input is needed.

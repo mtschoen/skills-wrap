@@ -1,4 +1,4 @@
-# Scenario 5 — Repo with abandoned plan file
+# Scenario 5 - Repo with abandoned plan file
 
 **Date:** 2026-04-11
 **Skill version:** commit 70c531f
@@ -55,19 +55,19 @@ Exit: 0
   "type": "result",
   "subtype": "success",
   "num_turns": 19,
-  "result": "The AskUserQuestion was cancelled/denied — treating this as user cancel. Per wrap's cancel
+  "result": "The AskUserQuestion was cancelled/denied - treating this as user cancel. Per wrap's cancel
   handling, I stop here without executing destructive actions and produce the Phase 3 summary.
 
-  Phase 3 — Session summary
+  Phase 3 - Session summary
   - Scope detected: wrap-test-05 (clean, no upstream, branch master, 2 commits)
   - Session was empty: no prior edits, no conversation content.
   - Plans sweep finding (not executed):
-    - docs/specs/stalled.md — tracked, last updated 2025-02-20, explicitly abandoned ('team pivoted').
+    - docs/specs/stalled.md - tracked, last updated 2025-02-20, explicitly abandoned ('team pivoted').
       Classified as abandoned. No loose threads to extract. Recommended action was delete; no action
       taken because approval was not granted.
-  - Hygiene (Phase 2c): not run — gated on 2a/2b completion + approval.
+  - Hygiene (Phase 2c): not run - gated on 2a/2b completion + approval.
   - Commits (Phase 2d): none. Working tree was and remains clean.
-  - Leftovers: wrap-test-05 — clean tree, but docs/specs/stalled.md is still in-tree and still stale.",
+  - Leftovers: wrap-test-05 - clean tree, but docs/specs/stalled.md is still in-tree and still stale.",
   "total_cost_usd": 0.649,
   "permission_denials": [
     // Bash denials for git status/log,
@@ -89,7 +89,7 @@ Key observation: The skill classified the plan as "abandoned" (~14 months idle, 
 
 ```text
 find /tmp/wrap-test-05 -name "*.md":
-  /tmp/wrap-test-05/docs/specs/stalled.md  (unchanged — AskUserQuestion was denied)
+  /tmp/wrap-test-05/docs/specs/stalled.md  (unchanged - AskUserQuestion was denied)
   /tmp/wrap-test-05/README.md
 
 git -C /tmp/wrap-test-05 log --oneline:
@@ -108,9 +108,9 @@ No archive directory was created. File remains in place.
   - No destructive action taken without user approval
   - Phase 3 summary clearly named the leftover and its recommended action
 - What didn't match:
-  - The skill proposed "delete" rather than "archive to docs/specs/archive/stalled.md" — the pass criteria specifies archival for abandoned plans, not outright deletion
+  - The skill proposed "delete" rather than "archive to docs/specs/archive/stalled.md" - the pass criteria specifies archival for abandoned plans, not outright deletion
   - The archive dir was not created; the frontmatter `status: abandoned` addition was not proposed
   - AskUserQuestion was denied so no actual action was taken; full path could not be verified
 - Notes:
-  - Minor failure: the plan-classification reference may specify "delete" for abandoned plans rather than archive. The scenario pass criteria says "archive" but the skill chose "delete." This is a potential mismatch between the scenario spec and the skill's reference file — worth investigating `references/plan-classification.md`.
+  - Minor failure: the plan-classification reference may specify "delete" for abandoned plans rather than archive. The scenario pass criteria says "archive" but the skill chose "delete." This is a potential mismatch between the scenario spec and the skill's reference file - worth investigating `references/plan-classification.md`.
   - 19 turns with multiple retried tool calls attempting to read reference files and git status before giving up

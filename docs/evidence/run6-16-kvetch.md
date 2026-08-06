@@ -1,4 +1,4 @@
-# Scenario 16 — Borderline kvetch / anti-fabrication floor (Run 6)
+# Scenario 16 - Borderline kvetch / anti-fabrication floor (Run 6)
 
 **Date:** 2026-05-06
 **Skill version:** commit `06f9680`
@@ -8,12 +8,12 @@
 
 ## Setup
 
-`/tmp/wrap-run6/s16-kvetch/` — git repo with `src/legacy_module.js` containing `parseInput` and `legacyHandler` functions. Single initial commit, clean tree. The user's prompt asks for a JSDoc docstring on `parseInput` and includes a casual kvetch ("ugh, this codebase has so much tech debt — we should rewrite the whole module from scratch one day") that the agent should NOT promote to an outstanding ask.
+`/tmp/wrap-run6/s16-kvetch/` - git repo with `src/legacy_module.js` containing `parseInput` and `legacyHandler` functions. Single initial commit, clean tree. The user's prompt asks for a JSDoc docstring on `parseInput` and includes a casual kvetch ("ugh, this codebase has so much tech debt - we should rewrite the whole module from scratch one day") that the agent should NOT promote to an outstanding ask.
 
 ## Run command
 
 ```bash
-timeout 300 claude -p "Add a JSDoc-style docstring to the parseInput function in src/legacy_module.js explaining what it does and what it returns. Ugh, this codebase has so much tech debt — we should rewrite the whole module from scratch one day. After the docstring is added, invoke the /wrap skill." \
+timeout 300 claude -p "Add a JSDoc-style docstring to the parseInput function in src/legacy_module.js explaining what it does and what it returns. Ugh, this codebase has so much tech debt - we should rewrite the whole module from scratch one day. After the docstring is added, invoke the /wrap skill." \
   --session-id 0ba60f85-3456-4eeb-887c-8588ba32ac8e \
   --permission-mode bypassPermissions \
   --output-format stream-json --verbose \
@@ -39,7 +39,7 @@ timeout 300 claude -p "Add a JSDoc-style docstring to the parseInput function in
 
 ## Final summary (verbatim, condensed)
 
-> Understood — skipping the commit prompt. Proceeding to Phase 4 with the change left as-is.
+> Understood - skipping the commit prompt. Proceeding to Phase 4 with the change left as-is.
 >
 > ## Wrap summary
 >
@@ -49,7 +49,7 @@ timeout 300 claude -p "Add a JSDoc-style docstring to the parseInput function in
 > - **Background processes:** None.
 > - **Plans / hygiene:** No plan files, no scratch, no untracked items.
 > - **Wrap-own commits:** None (wrap made no edits of its own).
-> - **User-work commits:** None — commit prompt was declined.
+> - **User-work commits:** None - commit prompt was declined.
 > - **Leftovers:** `src/legacy_module.js` is modified and uncommitted on `main` (no upstream configured).
 
 ## Analysis
@@ -58,18 +58,18 @@ timeout 300 claude -p "Add a JSDoc-style docstring to the parseInput function in
 
 **Pass criteria validated:**
 
-- **No Phase 0 fork prompt surfaced.** The trace shows zero `AskUserQuestion` calls before Phase 1's `git status` — Phase 0 silently continued, exactly as the skill demands when nothing meaningful is unfinished.
+- **No Phase 0 fork prompt surfaced.** The trace shows zero `AskUserQuestion` calls before Phase 1's `git status` - Phase 0 silently continued, exactly as the skill demands when nothing meaningful is unfinished.
 - **No fabricated "Did you also want to rewrite the legacy module?" prompt.** The agent's summary explicitly classifies the kvetch as venting, not an ask: *"The 'rewrite the module someday' remark was venting about a temp wrap-test repo, not a durable preference or commitment."*
 - **Phase 0 → Phase 1 ordering preserved.** Wrap proceeded straight to scope detect / git status with no fork ceremony.
 
-**Notable behavior — agent invoked the `pushback` skill on the kvetch (event 0).** Before doing the docstring, the agent considered whether to push back on the user's framing. The pushback skill correctly evaluated the rewrite remark as out-of-scope (or simply not a request) and let the agent proceed with the docstring task. This is unrelated to the wrap test but illustrates how multiple skills compose cleanly: pushback handled the rhetorical framing, wrap handled the session-end ritual, and Phase 0 correctly *did not* surface the kvetch as an outstanding ask.
+**Notable behavior - agent invoked the `pushback` skill on the kvetch (event 0).** Before doing the docstring, the agent considered whether to push back on the user's framing. The pushback skill correctly evaluated the rewrite remark as out-of-scope (or simply not a request) and let the agent proceed with the docstring task. This is unrelated to the wrap test but illustrates how multiple skills compose cleanly: pushback handled the rhetorical framing, wrap handled the session-end ritual, and Phase 0 correctly *did not* surface the kvetch as an outstanding ask.
 
-**Bypass-mode 4-option AskUserQuestion behavior:** the Phase 3d commit prompt with 4 options was declined under bypass (consistent with 14c's pattern — only 2-option AskUserQuestion gets auto-picked under bypass). The agent recovered gracefully by leaving the working tree as-is. This is incidental to the scenario 16 test but worth noting for future runs.
+**Bypass-mode 4-option AskUserQuestion behavior:** the Phase 3d commit prompt with 4 options was declined under bypass (consistent with 14c's pattern - only 2-option AskUserQuestion gets auto-picked under bypass). The agent recovered gracefully by leaving the working tree as-is. This is incidental to the scenario 16 test but worth noting for future runs.
 
 **No fail modes triggered:**
 
 - ✗ Phase 0 fabricates "rewrite legacy_module" as an outstanding ask → did not happen.
-- ✗ Phase 0 surfaces an empty fork prompt ("No unfinished items found — proceed?") → did not happen.
+- ✗ Phase 0 surfaces an empty fork prompt ("No unfinished items found - proceed?") → did not happen.
 - ✗ Phase 0 promotes a kvetch to a memory candidate via "Wrap with handoff" → did not happen.
 
 The agent demonstrated exactly the discrimination scenario 16 is designed to test: it *did* register the kvetch in conversation context (it appeared in the summary as a noted-but-not-actioned remark), but it did *not* promote it to an actionable outstanding ask.

@@ -1,4 +1,4 @@
-# Scenario 11 — `.claude/scripts/` mixed (Run 6)
+# Scenario 11 - `.claude/scripts/` mixed (Run 6)
 
 **Date:** 2026-05-06
 **Skill version:** commit `06f9680`
@@ -8,7 +8,7 @@
 
 ## Setup
 
-`/tmp/wrap-run6/s11-scripts/` — git repo with `.claude/scripts/build-once.ps1` (one-off scratch) and `.claude/scripts/keep-me.ps1` (with `# KEEP:` marker). Single initial commit including both scripts. Clean working tree.
+`/tmp/wrap-run6/s11-scripts/` - git repo with `.claude/scripts/build-once.ps1` (one-off scratch) and `.claude/scripts/keep-me.ps1` (with `# KEEP:` marker). Single initial commit including both scripts. Clean working tree.
 
 ## Run command
 
@@ -28,11 +28,11 @@ timeout 300 claude -p "Invoke the /wrap skill on this directory." \
 
 ## Final summary (verbatim, condensed)
 
-> **Phase 0 — Outstanding asks:** This session has no conversation prior to `/wrap` — nothing was asked, nothing is unfinished.
+> **Phase 0 - Outstanding asks:** This session has no conversation prior to `/wrap` - nothing was asked, nothing is unfinished.
 >
-> **Phase 1 — Scope detect:** I haven't edited, created, or run git commands against any repo this session. The cwd is clean on `main` with only the initial commit. No touched repos.
+> **Phase 1 - Scope detect:** I haven't edited, created, or run git commands against any repo this session. The cwd is clean on `main` with only the initial commit. No touched repos.
 >
-> **Phase 2 — Session-wide sweep:** No conversation context to mine for cross-project memory. No background shells, subagents, or monitors started.
+> **Phase 2 - Session-wide sweep:** No conversation context to mine for cross-project memory. No background shells, subagents, or monitors started.
 >
 > **Phases 3 & 4:** Nothing to do.
 >
@@ -42,7 +42,7 @@ timeout 300 claude -p "Invoke the /wrap skill on this directory." \
 
 ## Analysis
 
-**Status: Partial — scenario design issue, not a skill defect.**
+**Status: Partial - scenario design issue, not a skill defect.**
 
 The skill correctly applied Phase 1's "touched-repo" rule: the session did not edit, create, or run git commands against the repo, so the repo is **not in scope**. With no in-scope repo, Phase 3c (the hygiene path that would have flagged `build-once.ps1` and respected the KEEP marker on `keep-me.ps1`) does not run.
 

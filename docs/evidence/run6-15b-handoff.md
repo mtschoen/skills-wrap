@@ -1,4 +1,4 @@
-# Scenario 15b — Wrap with handoff branch (Run 6)
+# Scenario 15b - Wrap with handoff branch (Run 6)
 
 **Date:** 2026-05-06
 **Skill version:** commit `06f9680`
@@ -8,9 +8,9 @@
 
 ## Setup
 
-`/tmp/wrap-run6/s15a-finishfirst/` (yes, the directory was originally named for the Finish-first test — the actual branch exercised was Wrap-with-handoff because of bypass-mode AskUserQuestion behavior; see Analysis). Fresh clone of the s15-template fixture: `src/forms/UserForm.tsx` (name-only form), `src/utils/validateEmail.ts`, `README.md`, single initial commit on `main`.
+`/tmp/wrap-run6/s15a-finishfirst/` (yes, the directory was originally named for the Finish-first test - the actual branch exercised was Wrap-with-handoff because of bypass-mode AskUserQuestion behavior; see Analysis). Fresh clone of the s15-template fixture: `src/forms/UserForm.tsx` (name-only form), `src/utils/validateEmail.ts`, `README.md`, single initial commit on `main`.
 
-Prompt: *"Add three things... Complete only task 1, then stop and invoke /wrap. Do not start tasks 2 or 3."* — three asks, the user explicitly stops after task 1.
+Prompt: *"Add three things... Complete only task 1, then stop and invoke /wrap. Do not start tasks 2 or 3."* - three asks, the user explicitly stops after task 1.
 
 ## Run command
 
@@ -41,36 +41,36 @@ timeout 360 claude -p "I want you to do three things: (1) add an email field to 
 
 ## Final summary (verbatim, condensed)
 
-> **Phase 4 — Summary.**
+> **Phase 4 - Summary.**
 >
 > - **Repo wrapped:** `s15a-finishfirst` (the only repo touched this session).
-> - **Task 1 done:** Added `email` input to `src/forms/UserForm.tsx` (uncommitted — left as user work).
+> - **Task 1 done:** Added `email` input to `src/forms/UserForm.tsx` (uncommitted - left as user work).
 > - **Tasks 2 & 3 deferred per your instruction:** Captured in `HANDOFF.md` so they aren't lost.
-> - **Wrap commit:** `def5bcd` — `chore: wrap session hygiene` (HANDOFF.md only).
-> - **Phase 0 fork:** I asked which path to take for the unfinished asks; the AskUserQuestion was declined, so I defaulted to **"Wrap with handoff"** — preserves the work without violating your "do not start tasks 2 or 3" instruction.
+> - **Wrap commit:** `def5bcd` - `chore: wrap session hygiene` (HANDOFF.md only).
+> - **Phase 0 fork:** I asked which path to take for the unfinished asks; the AskUserQuestion was declined, so I defaulted to **"Wrap with handoff"** - preserves the work without violating your "do not start tasks 2 or 3" instruction.
 > - **Leftovers:** `src/forms/UserForm.tsx` is modified but uncommitted. No upstream configured, so nothing to push regardless.
 > - **No background processes, no plans, no scratch, no stale memory.**
 
 ## Analysis
 
-**Status: Pass — for the Wrap-with-handoff branch.** This run was originally framed as the "Finish first" test; under bypass mode, the 3-option Phase 0 AskUserQuestion is declined (not auto-picked), and the agent inferred the right branch from the user's prior context ("don't start tasks 2 or 3" reads as deferral, not abort). That inference landed on Wrap-with-handoff, so we got handoff-branch evidence organically.
+**Status: Pass - for the Wrap-with-handoff branch.** This run was originally framed as the "Finish first" test; under bypass mode, the 3-option Phase 0 AskUserQuestion is declined (not auto-picked), and the agent inferred the right branch from the user's prior context ("don't start tasks 2 or 3" reads as deferral, not abort). That inference landed on Wrap-with-handoff, so we got handoff-branch evidence organically.
 
 **Pass criteria validated for the handoff branch:**
 
 - **Phase 0 fork prompt fired with the exact 3 options in skill order:** `['Finish first', 'Wrap with handoff', 'Wrap, drop the rest']` (event 6).
 - **Phase 0 → Phase 1 ordering invariant held:** the AskUserQuestion at event 6 fires before Phase 1's `git status` at event 7. No git/Bash hits the repo before the fork resolves.
-- **Unfinished tasks externalized to a concrete destination:** `HANDOFF.md` was created with the two outstanding asks (event 8), then committed (event 9 — `def5bcd`, `chore: wrap session hygiene`).
+- **Unfinished tasks externalized to a concrete destination:** `HANDOFF.md` was created with the two outstanding asks (event 8), then committed (event 9 - `def5bcd`, `chore: wrap session hygiene`).
 - **Phase 4 summary names the destination:** *"Captured in `HANDOFF.md` so they aren't lost."*
 - **Wrap commit is distinct from user-work:** the wrap commit covers only `HANDOFF.md`; the task-1 edit (`UserForm.tsx`) was correctly left as uncommitted user work.
 
-**Bypass-mode AskUserQuestion behavior — important infrastructure finding:**
+**Bypass-mode AskUserQuestion behavior - important infrastructure finding:**
 
 | AskUserQuestion option count | Bypass behavior |
 |---|---|
 | 2 (e.g., 13b's Stop / Leave) | First option auto-selected |
 | 3+ (e.g., this fork's three options, or 14c's three destinations) | Question is declined; agent must default |
 
-This means scenarios 15a (Finish first) and 15c (Wrap, drop the rest) cannot be cleanly exercised under bypass — both require explicit answer injection via stream-json input or a re-run with prompt framing that biases the agent's decline-fallback.
+This means scenarios 15a (Finish first) and 15c (Wrap, drop the rest) cannot be cleanly exercised under bypass - both require explicit answer injection via stream-json input or a re-run with prompt framing that biases the agent's decline-fallback.
 
 **No fail modes triggered:**
 

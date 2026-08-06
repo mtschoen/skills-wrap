@@ -1,4 +1,4 @@
-# Scenario 10 — project-tracker present vs absent
+# Scenario 10 - project-tracker present vs absent
 
 **Date:** 2026-04-11
 **Skill version:** commit 70c531f
@@ -33,7 +33,7 @@ State: master is 2 commits ahead of origin/master, plus 3 untracked files.
 
 ## Run command
 
-**Run 1 — Default settings (project-tracker MCP available if configured globally):**
+**Run 1 - Default settings (project-tracker MCP available if configured globally):**
 
 ```bash
 SESSION_ID=$(python -c "import uuid; print(uuid.uuid4())")
@@ -45,7 +45,7 @@ timeout 180 claude -p "/wrap" \
   > /tmp/wrap-test-10-run1-output.json 2>&1
 ```
 
-**Run 2 — No MCP (--settings '{"mcpServers":{}}'):**
+**Run 2 - No MCP (--settings '{"mcpServers":{}}'):**
 
 ```bash
 SESSION_ID=$(python -c "import uuid; print(uuid.uuid4())")
@@ -66,7 +66,7 @@ timeout 180 claude -p "/wrap" \
 Exit: 0
 num_turns: 21, total_cost: $0.743
 
-Phase 3 — Session summary:
+Phase 3 - Session summary:
 - Scope: wrap-test-10 (1 repo, detected via dirty-scan; no paths touched this session)
 - Accomplishments: None. Cold-start /wrap with no preceding work.
 - Memory offload totals: Phase 1 = 0, Phase 2a = 0
@@ -91,7 +91,7 @@ permission_denials: [
 Exit: 0
 num_turns: 7, total_cost: $0.447
 
-Phase 3 — Session summary (cancelled):
+Phase 3 - Session summary (cancelled):
 Wrap cancelled at Phase 0 (scope confirmation denied).
 - Completed: nothing. No memory writes, no commits, no deletes.
 - Leftovers: wrap-test-10 has 3 pre-existing untracked files on master. Not touched by wrap.
@@ -123,14 +123,14 @@ git -C /tmp/wrap-test-10 log --oneline:
 - **Result:** Partial
 - What matched the pass criteria:
   - Both runs detected the same repo state (3 untracked files, 2 unpushed commits)
-  - Both runs declined to act without user approval — no data loss in either run
+  - Both runs declined to act without user approval - no data loss in either run
   - User-visible findings were equivalent across both runs (same files flagged, same commit state noted)
   - No safety violations in either run
 - What didn't match:
-  - The scenario's goal of comparing "project-tracker MCP tool path vs raw git status path" could not be verified because project-tracker MCP is not configured in this environment — both runs effectively used the same code path (neither had project-tracker available)
+  - The scenario's goal of comparing "project-tracker MCP tool path vs raw git status path" could not be verified because project-tracker MCP is not configured in this environment - both runs effectively used the same code path (neither had project-tracker available)
   - Run 2 (explicit mcpServers:{}) ran fewer turns (7 vs 21) suggesting different behavior, but the difference is primarily that Run 1 attempted to read reference files before being denied, while Run 2 reached the scope question faster
   - Neither run completed enough phases to show the full findings comparison
 - Notes:
-  - The test environment does not have project-tracker MCP configured, so the "present vs absent" comparison is effectively "absent vs absent with explicit disable" — both have the same behavior
+  - The test environment does not have project-tracker MCP configured, so the "present vs absent" comparison is effectively "absent vs absent with explicit disable" - both have the same behavior
   - The scenario is marked as infrastructure-limited: would need a system where project-tracker MCP is actually registered to test the intended code path divergence
-  - The safety property (same user-visible output regardless of tool path) was partially verified — both runs surfaced the same dirty files and unpushed commits
+  - The safety property (same user-visible output regardless of tool path) was partially verified - both runs surfaced the same dirty files and unpushed commits

@@ -1,4 +1,4 @@
-# Scenario 4 — Repo with completed plan file
+# Scenario 4 - Repo with completed plan file
 
 **Date:** 2026-04-11
 **Skill version:** commit 70c531f
@@ -89,7 +89,7 @@ The skill correctly:
 
 ```text
 find /tmp/wrap-test-04 -name "*.md":
-  /tmp/wrap-test-04/docs/specs/old-plan.md  (unchanged — AskUserQuestion was denied)
+  /tmp/wrap-test-04/docs/specs/old-plan.md  (unchanged - AskUserQuestion was denied)
   /tmp/wrap-test-04/README.md
 
 git -C /tmp/wrap-test-04 log --oneline:

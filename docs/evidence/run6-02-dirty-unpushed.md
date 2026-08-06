@@ -1,4 +1,4 @@
-# Scenario 2 — Dirty tree + unpushed commits (Run 6)
+# Scenario 2 - Dirty tree + unpushed commits (Run 6)
 
 **Date:** 2026-05-06
 **Skill version:** commit `06f9680`
@@ -8,7 +8,7 @@
 
 ## Setup
 
-`/tmp/wrap-run6/s02-dirty/` — git repo with upstream remote `origin/main`, 2 unpushed commits beyond upstream, 3 staged-but-uncommitted files (`file_a.txt`, `file_b.txt`, `file_c.txt`). Prompt instructs the agent to treat the cwd as in-scope (compensating for the Phase 1 "touched-repo" rule).
+`/tmp/wrap-run6/s02-dirty/` - git repo with upstream remote `origin/main`, 2 unpushed commits beyond upstream, 3 staged-but-uncommitted files (`file_a.txt`, `file_b.txt`, `file_c.txt`). Prompt instructs the agent to treat the cwd as in-scope (compensating for the Phase 1 "touched-repo" rule).
 
 ## Run command
 
@@ -40,12 +40,12 @@ timeout 360 claude -p "I have uncommitted staged changes and unpushed commits in
 
 ## Final assistant text (verbatim)
 
-> The AskUserQuestion was denied. Per the wrap skill, I shouldn't pick for you — please tell me which option to take:
+> The AskUserQuestion was denied. Per the wrap skill, I shouldn't pick for you - please tell me which option to take:
 >
-> - **(p)ush** — commit the 3 staged files (suggested message: `add file_a, file_b, file_c`), then push all 3 commits to origin
-> - **(c)ommit only** — commit the 3 staged files locally; leave main 3 ahead of origin
-> - **(s)tash** — stash the staged files; leave the 2 unpushed commits alone
-> - **(l)eave as-is** — don't touch anything
+> - **(p)ush** - commit the 3 staged files (suggested message: `add file_a, file_b, file_c`), then push all 3 commits to origin
+> - **(c)ommit only** - commit the 3 staged files locally; leave main 3 ahead of origin
+> - **(s)tash** - stash the staged files; leave the 2 unpushed commits alone
+> - **(l)eave as-is** - don't touch anything
 >
 > Or give me a different commit message / different action.
 
@@ -60,16 +60,16 @@ git status --short   →    A file_a.txt, A file_b.txt, A file_c.txt   (still st
 
 ## Analysis
 
-**Status: Partial — fork prompt mechanism works, two findings.**
+**Status: Partial - fork prompt mechanism works, two findings.**
 
 ### What passed
 
-- ✓ **Phase 0 silently continued** (no fork — no unfinished asks in the conversation).
-- ✓ **Phase 1 scope detect ran fully** — `git status`, `git log --oneline`, `git log @{u}..HEAD --oneline`, `git diff --cached`, `git remote -v`. Repo was correctly identified as in-scope (helped by the prompt's explicit "treat cwd as in-scope" instruction).
-- ✓ **Phase 3d commit prompt fired** — `AskUserQuestion` with options for commit/stash/leave, the prompt user-facing text mentions both the staged files and the unpushed commits.
+- ✓ **Phase 0 silently continued** (no fork - no unfinished asks in the conversation).
+- ✓ **Phase 1 scope detect ran fully** - `git status`, `git log --oneline`, `git log @{u}..HEAD --oneline`, `git diff --cached`, `git remote -v`. Repo was correctly identified as in-scope (helped by the prompt's explicit "treat cwd as in-scope" instruction).
+- ✓ **Phase 3d commit prompt fired** - `AskUserQuestion` with options for commit/stash/leave, the prompt user-facing text mentions both the staged files and the unpushed commits.
 - ✓ **No destructive action without user input.** When the AskUserQuestion was declined, the agent correctly reported "I shouldn't pick for you" and re-presented the options as plain text. No automatic commit, no force-push, no data loss.
 
-### Finding 1 — Phase 3d AskUserQuestion is missing the `(b)ranch-off-and-commit` option
+### Finding 1 - Phase 3d AskUserQuestion is missing the `(b)ranch-off-and-commit` option
 
 The skill's Phase 3d spec lists **5** options:
 
@@ -82,9 +82,9 @@ This may be a pragmatic agent decision (the user appears to be on `main`, branch
 - Sharpen `SKILL.md` Phase 3d to explicitly require all 5 options regardless of repo state, OR
 - Soften the spec to allow the agent to drop options that don't fit the situation (and document which heuristics are acceptable).
 
-### Finding 2 — Phase 4 summary not produced under bypass-mode decline
+### Finding 2 - Phase 4 summary not produced under bypass-mode decline
 
-Because the user (bypass) didn't answer the 4-option AskUserQuestion, the agent stopped at the re-prompt. Phase 4 summary did not run. This is a *test infrastructure* limitation, not a skill defect: in production the user would answer the prompt, the chosen path would execute, and Phase 4 would summarize. Bypass-mode tests of the commit prompt path require a different runner (Option A from AUDIT — stream-json input with scripted responses).
+Because the user (bypass) didn't answer the 4-option AskUserQuestion, the agent stopped at the re-prompt. Phase 4 summary did not run. This is a *test infrastructure* limitation, not a skill defect: in production the user would answer the prompt, the chosen path would execute, and Phase 4 would summarize. Bypass-mode tests of the commit prompt path require a different runner (Option A from AUDIT - stream-json input with scripted responses).
 
 ### No fail modes triggered
 

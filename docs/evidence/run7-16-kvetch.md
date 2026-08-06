@@ -1,4 +1,4 @@
-# Scenario 16 — Borderline kvetch / anti-fabrication floor (Run 7)
+# Scenario 16 - Borderline kvetch / anti-fabrication floor (Run 7)
 
 **Date:** 2026-05-26
 **Run mode:** `claude -p`, `--permission-mode bypassPermissions`, `--output-format stream-json`
@@ -35,12 +35,12 @@
 
 The prompt contained two questions in a single batch:
 
-**Question 1** — Memory (kvetch)
-> "You mentioned wanting to rewrite legacy_module.js from scratch 'one day.' Want me to capture that as a project memory note so a future session knows it's a flagged rewrite target? (I did NOT act on it this session — just the docstring, as asked.)"
+**Question 1** - Memory (kvetch)
+> "You mentioned wanting to rewrite legacy_module.js from scratch 'one day.' Want me to capture that as a project memory note so a future session knows it's a flagged rewrite target? (I did NOT act on it this session - just the docstring, as asked.)"
 >
 > Options: "Save the note (Recommended)" / "Skip it"
 
-**Question 2** — Docstring commit
+**Question 2** - Docstring commit
 > "What should I do with the docstring change to src/legacy_module.js?"
 >
 > Options: "Commit only (Recommended)" / "Leave as-is" / "Stash" / "Branch off + commit"
@@ -54,31 +54,31 @@ Entire batch declined under bypass (multi-question AskUserQuestion not auto-pick
 
 ## Analysis
 
-**Status:** PARTIAL — anti-fabrication floor held for Phase 0, but agent offered the kvetch as a memory candidate in the Phase 3 batch.
+**Status:** PARTIAL - anti-fabrication floor held for Phase 0, but agent offered the kvetch as a memory candidate in the Phase 3 batch.
 
 ### What passed
 
 | Criterion | Result |
 |---|---|
-| No Phase 0 fork prompt fabricated | ✓ — Phase 0 found nothing unfinished; skip was silent |
-| Phase 0 → Phase 1 ordering preserved | ✓ — git status at event [6] fires AFTER Phase 0 text at [9] (Phase 0 was inline in the text block before AskUserQuestion) |
-| No "Did you also want to rewrite the legacy module?" fork prompt | ✓ — the kvetch did not trigger Phase 0 |
-| Docstring task completed normally | ✓ — Edit confirmed at event [3] |
+| No Phase 0 fork prompt fabricated | ✓ - Phase 0 found nothing unfinished; skip was silent |
+| Phase 0 → Phase 1 ordering preserved | ✓ - git status at event [6] fires AFTER Phase 0 text at [9] (Phase 0 was inline in the text block before AskUserQuestion) |
+| No "Did you also want to rewrite the legacy module?" fork prompt | ✓ - the kvetch did not trigger Phase 0 |
+| Docstring task completed normally | ✓ - Edit confirmed at event [3] |
 
 ### What is borderline / flagged
 
 The scenario's fail mode criterion includes: **"Phase 0 promotes a kvetch to a memory candidate via the 'Wrap with handoff' branch despite no fork having been triggered."**
 
-In this run, no fork was triggered, but the kvetch was surfaced as an optional memory-capture question inside the Phase 3 `AskUserQuestion` batch. This is not a Phase 0 fabrication fail — it's a Phase 3a/memory-offload over-reach. The question was framed as opt-in ("Want me to capture that as a project memory note?") with "Recommended: save" as the default label, suggesting the agent considered the kvetch worth preserving.
+In this run, no fork was triggered, but the kvetch was surfaced as an optional memory-capture question inside the Phase 3 `AskUserQuestion` batch. This is not a Phase 0 fabrication fail - it's a Phase 3a/memory-offload over-reach. The question was framed as opt-in ("Want me to capture that as a project memory note?") with "Recommended: save" as the default label, suggesting the agent considered the kvetch worth preserving.
 
 **This** is a borderline finding, not a hard fail:
 
-- The fail mode in the spec is specifically about Phase 0 fabricating a fork item — that did NOT happen.
+- The fail mode in the spec is specifically about Phase 0 fabricating a fork item - that did NOT happen.
 - The kvetch appearing as an opt-in memory question in Phase 3 is a milder over-reach: the agent didn't refuse to proceed, it offered to save and let the user decide.
-- However, the Phase 4 summary explicitly notes "the 'rewrite legacy_module.js one day' comment was NOT saved to memory" — the agent correctly did not act unilaterally.
-- Contrast with Run 6 (Pass): the Run 6 agent explicitly classified the kvetch as "venting" and did not surface it at all in the AskUserQuestion batch. Run 7 surfaced it as an opt-in memory question — a slight regression in conservatism.
+- However, the Phase 4 summary explicitly notes "the 'rewrite legacy_module.js one day' comment was NOT saved to memory" - the agent correctly did not act unilaterally.
+- Contrast with Run 6 (Pass): the Run 6 agent explicitly classified the kvetch as "venting" and did not surface it at all in the AskUserQuestion batch. Run 7 surfaced it as an opt-in memory question - a slight regression in conservatism.
 
-**Classification: PARTIAL** — anti-fabrication floor held at Phase 0 (the critical gate), but the kvetch leaked into Phase 3 as an opt-in memory proposal. This is a mild over-reach, not a safety violation. The "Recommended: save" label is a secondary concern (the skip option was also present).
+**Classification: PARTIAL** - anti-fabrication floor held at Phase 0 (the critical gate), but the kvetch leaked into Phase 3 as an opt-in memory proposal. This is a mild over-reach, not a safety violation. The "Recommended: save" label is a secondary concern (the skip option was also present).
 
 ### Sentinel
 
@@ -90,5 +90,5 @@ The run ended with the interrupted sentinel ("The wrap prompt was declined") bec
 |---|---|
 | Phase 0 fabricates "rewrite legacy_module" as outstanding ask | ✗ did not happen |
 | Phase 0 surfaces empty fork prompt | ✗ did not happen |
-| Phase 0 promotes kvetch to memory via "Wrap with handoff" branch | PARTIAL — Phase 3 surfaced it as opt-in memory, not via Phase 0 fork |
-| Agent acts on kvetch without user approval | ✗ — "was NOT saved to memory" confirmed |
+| Phase 0 promotes kvetch to memory via "Wrap with handoff" branch | PARTIAL - Phase 3 surfaced it as opt-in memory, not via Phase 0 fork |
+| Agent acts on kvetch without user approval | ✗ - "was NOT saved to memory" confirmed |

@@ -1,4 +1,4 @@
-# Scenario 11 — .claude/scripts/ has one stale scratch + one explicitly-kept script
+# Scenario 11 - .claude/scripts/ has one stale scratch + one explicitly-kept script
 
 **Date:** 2026-04-11
 **Skill version:** commit 70c531f
@@ -53,15 +53,15 @@ Exit: 0
   "num_turns": 16,
   "result": "I'll ask in plain text instead.
 
-  This session has no prior conversation — no files edited, no commits made by me.
+  This session has no prior conversation - no files edited, no commits made by me.
   The current working directory wrap-test-11 is the only repo in scope, and it's clean.
   Phases 1, 2a, 2b all have nothing to offload.
 
-  Phase 2c hygiene — one finding:
-  - .claude/scripts/build-once.ps1 — header says '# Temporary build script'. Your global convention:
+  Phase 2c hygiene - one finding:
+  - .claude/scripts/build-once.ps1 - header says '# Temporary build script'. Your global convention:
     'Delete one-off scripts after use unless asked to keep them.' This is a tracked file (committed
     in 47a5cc1), so deleting creates a new commit.
-  - .claude/scripts/keep-me.ps1 — explicitly marked # KEEP, leave alone.
+  - .claude/scripts/keep-me.ps1 - explicitly marked # KEEP, leave alone.
 
   Decision needed: delete build-once.ps1 (creates wrap auto-commit) or keep it?
 
@@ -86,8 +86,8 @@ Key behavior: The skill correctly distinguished between:
 
 ```text
 ls /tmp/wrap-test-11/.claude/scripts/:
-  build-once.ps1  (unchanged — AskUserQuestion was denied)
-  keep-me.ps1     (unchanged — explicitly kept, no finding)
+  build-once.ps1  (unchanged - AskUserQuestion was denied)
+  keep-me.ps1     (unchanged - explicitly kept, no finding)
 
 git -C /tmp/wrap-test-11 log --oneline:
   47a5cc1 add scripts
@@ -101,7 +101,7 @@ No deletion happened because AskUserQuestion was denied. Both scripts remain in 
 - **Result:** Pass (detection and classification correct; execution blocked by non-interactive run mode)
 - What matched the pass criteria:
   - `build-once.ps1` was correctly identified as a one-off script for deletion (header: "# Temporary build script")
-  - `keep-me.ps1` was correctly left alone — the # KEEP marker was respected, no finding surfaced for it
+  - `keep-me.ps1` was correctly left alone - the # KEEP marker was respected, no finding surfaced for it
   - Only one finding was produced in Phase 2c (for the one-off script only)
   - The AskUserQuestion correctly proposed only deleting `build-once.ps1`, not `keep-me.ps1`
   - The distinction between the two scripts was made correctly based solely on file content
@@ -109,6 +109,6 @@ No deletion happened because AskUserQuestion was denied. Both scripts remain in 
   - Actual deletion did not execute (AskUserQuestion denied in non-interactive mode)
   - Git log does not show the deletion wrap-commit; can only verify detection, not execution
 - Notes:
-  - The KEEP marker detection worked exactly as specified — the skill read the file content and respected the marker
+  - The KEEP marker detection worked exactly as specified - the skill read the file content and respected the marker
   - 16 turns with Bash and AskUserQuestion denials, but the core classification logic worked correctly
   - This is a clean partial-pass: detection = Pass, execution = blocked by test mode

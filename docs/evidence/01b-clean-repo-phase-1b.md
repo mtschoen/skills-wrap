@@ -1,4 +1,4 @@
-# Scenario 1 — Clean repo, nothing to wrap (re-run with Phase 1b)
+# Scenario 1 - Clean repo, nothing to wrap (re-run with Phase 1b)
 
 **Date:** 2026-04-20
 **Skill version:** commit `f2ac74c` + WIP edits adding Phase 1b (session-wide sweep split into 1a memory offload + 1b background process sweep)
@@ -52,7 +52,7 @@ No new commits. No files written. No auto-commit. No `.claude/` artifacts.
 
 **Status: Pass.** Validates the updated scenario 1 setup and the new Phase 1b empty-case behavior.
 
-- Phase 1b fired but found nothing, skipped silently — no empty `AskUserQuestion` batch surfaced.
+- Phase 1b fired but found nothing, skipped silently - no empty `AskUserQuestion` batch surfaced.
 - The "no background processes running" assertion appears explicitly in the summary, matching the updated empty-case line in SKILL.md.
 - No regression from the original scenario 1 run: same clean exit, zero denials (the acceptEdits path no longer trips AskUserQuestion here because the scope-confirmation prompt isn't surfaced when there's nothing to wrap).
 - Principle 8 (no items, no ceremony) holds: empty sweep → terse summary → exit.

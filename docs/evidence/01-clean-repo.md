@@ -1,4 +1,4 @@
-# Scenario 1 — Clean repo, nothing to wrap
+# Scenario 1 - Clean repo, nothing to wrap
 
 **Date:** 2026-04-11
 **Skill version:** commit 70c531f Fix review feedback from Wave 1 quality pass
@@ -44,11 +44,11 @@ Output was 1 JSON object (single line). Key fields:
   "is_error": false,
   "num_turns": 10,
   "stop_reason": "end_turn",
-  "result": "Understood — skipping the confirmation prompt. Since this session was empty and the repo is already clean, moving directly to Phase 3.\n\n## Phase 3 — Wrap summary\n\n**Repos wrapped:** C:/Users/user/AppData/Local/Temp/wrap-test-01\n\n**Accomplishments:**\n- Nothing. This session's only activity was invoking /wrap itself.\n\n**Memory offload:**\n- Phase 1 (cross-project): 0 entries\n- Phase 2a (per-repo): 0 entries\n\n**Repo state:**\n- wrap-test-01: clean. One commit (df4c805 initial). No upstream configured.\n\n**Plans sweep:** no plan files found.\n**Hygiene pass:** nothing untracked, no scratch, no stale state.\n**Commits made:** 0 (wrap auto-commit skipped — nothing to commit)\n\n**Leftovers:** none."
+  "result": "Understood - skipping the confirmation prompt. Since this session was empty and the repo is already clean, moving directly to Phase 3.\n\n## Phase 3 - Wrap summary\n\n**Repos wrapped:** C:/Users/user/AppData/Local/Temp/wrap-test-01\n\n**Accomplishments:**\n- Nothing. This session's only activity was invoking /wrap itself.\n\n**Memory offload:**\n- Phase 1 (cross-project): 0 entries\n- Phase 2a (per-repo): 0 entries\n\n**Repo state:**\n- wrap-test-01: clean. One commit (df4c805 initial). No upstream configured.\n\n**Plans sweep:** no plan files found.\n**Hygiene pass:** nothing untracked, no scratch, no stale state.\n**Commits made:** 0 (wrap auto-commit skipped - nothing to commit)\n\n**Leftovers:** none."
 }
 ```
 
-3 permission denials (2x Bash for git status, 1x AskUserQuestion for scope confirmation — all declined in non-interactive mode, skill self-recovered gracefully).
+3 permission denials (2x Bash for git status, 1x AskUserQuestion for scope confirmation - all declined in non-interactive mode, skill self-recovered gracefully).
 
 ## Filesystem state after run
 
@@ -76,4 +76,4 @@ No new commits, no new files. Fixture filesystem state unchanged.
   - No new files in /tmp/wrap-test-01 (only README.md)
   - Fixture filesystem state unchanged
 - What didn't match: nothing
-- Notes: The skill correctly identified that there was nothing to wrap, ran through all phases (1, 2a, 2b, 2c, 2d), produced a coherent summary, and exited cleanly. The AskUserQuestion scope confirmation was declined in non-interactive mode but the skill recovered gracefully, skipping to Phase 3. The skill also noted the Git-for-Windows MSYS path mangling of `/wrap` — good diagnostic observation.
+- Notes: The skill correctly identified that there was nothing to wrap, ran through all phases (1, 2a, 2b, 2c, 2d), produced a coherent summary, and exited cleanly. The AskUserQuestion scope confirmation was declined in non-interactive mode but the skill recovered gracefully, skipping to Phase 3. The skill also noted the Git-for-Windows MSYS path mangling of `/wrap` - good diagnostic observation.
