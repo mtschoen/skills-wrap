@@ -80,7 +80,7 @@ Deploy targets, build times, known quirks, environment constraints specific to t
 
 Things that went wrong during the session that future agents should avoid.
 
-- **Destination:** `AGENTS.md` note or code comment at the site.
+- **Destination:** `AGENTS.md` note or code comment at the site. If the trap is machine- or environment-scoped rather than project-scoped (tooling behavior that would bite in any repo), save it as a `gotcha_*.md` note in the cross-project memory corpus instead.
 - **Example:** "tests fail silently if `ASYNC_MODE=1` is not set; check env before debugging".
 
 ### Work-in-progress code
