@@ -64,7 +64,7 @@ On Windows, substitute `session-end-reminder.ps1`:
 
 Use the `update-config` skill to perform the registration rather than hand-editing `settings.json`.
 
-If this skill arrived as part of a skill pack, check whether the pack's installer provides a hook offer flow - a command that checks registration state and records the user's yes / no / remind-me-later decision - and route the suggestion through it instead of proposing manual registration, so the user is asked at most once.
+If this skill arrived as part of a skill pack, check whether the pack's installer provides a hook offer flow - a command that checks registration state and records the user's yes / no / later decision - and route the suggestion through it instead of proposing manual registration, so the user is asked at most once.
 
 If some future packaging lands the skill at a path that moves between versions, a literal path like the one above goes stale on every bump; that packaging is responsible for registering the hook itself, and this file's snippet no longer applies.
 
