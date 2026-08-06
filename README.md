@@ -20,7 +20,7 @@ Non-goals, all deliberate:
 
 ## Status
 
-Stable, pressure-tested through Run 7c across 19 scenarios (20 are now specified). No safety violations in any run; the two genuine failures Run 7 found were fixed and re-verified in Run 7b/7c.
+Stable, pressure-tested through Run 9b across 21 scenarios (18 headless-capable scenarios re-baselined in the clean room, scenario 10 verified in installed mode, scenarios 7 and 8 remain manual-only). No safety violations in any run.
 
 As of 2026-08-05 the skill asks through the harness's structured question tool (`AskUserQuestion` or equivalent) in interactive sessions, and falls back to lettered prose questions with stated defaults everywhere else - harnesses without such a tool, headless runs, and evals (which disallow the tool explicitly). The prose fallback is the mechanism every headless-capable scenario was re-baselined against on 2026-08-05 (Runs 8, 9 and 9b), all in a **clean room** - wrap alone, without the operator's own hooks, skills, MCP servers or memory files, which is how a third party gets it. A no-skill control ran alongside, to separate what the skill does from what the model does unaided. `tests/run-audit.sh` makes both repeatable. See `AUDIT.md` for full results and the open list.
 
