@@ -85,4 +85,4 @@ Things that went wrong during the session that future agents should avoid.
 
 Uncommitted changes discussed but not finished.
 
-- **Destination:** commit as WIP or stash with a descriptive note. Decided in Phase 3d (commit decision).
+- **Destination:** commit as WIP with a descriptive message. Decided in Phase 3d (commit decision).

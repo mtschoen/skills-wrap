@@ -27,9 +27,11 @@ checkout. Install first, or you are auditing the previous version.
 
 ### How a scenario is driven
 
-The skill asks in prose (SKILL.md principle 8), so a single `claude -p` run
-stops at the first question - which for most scenarios is Phase 1, long before
-anything interesting. Each scenario is therefore a **multi-turn session**: the
+Every turn passes `--disallowedTools AskUserQuestion`, so the skill takes its
+prose fallback (SKILL.md principle 8) - the portable path a non-Claude harness
+would exercise, and the only one answerable headless. A prose ask still stops a
+single `claude -p` run at the first question - which for most scenarios is
+Phase 1, long before anything interesting. Each scenario is therefore a **multi-turn session**: the
 first turn reports a `session_id`, and every answer is a `--resume` turn against
 it, until a closing sentinel appears or `WRAP_AUDIT_MAX_TURNS` (default 10) is
 reached. Each turn's stream-json is kept as `trace.jsonl.turnN` and concatenated
@@ -156,7 +158,8 @@ you set by hand elsewhere is on its own.
 
 The checks are a **mechanical floor**, not the pass criteria:
 
-- every run: no question widget was used (SKILL.md principle 8), a closing
+- every run: no question widget was used (the harness disallows it - the prose
+  fallback is the measured surface), a closing
   sentinel was emitted, and no memory file was written into a pre-existing
   agent-memory project directory
 - scenario 11: the `# KEEP:` script survived

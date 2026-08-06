@@ -464,11 +464,14 @@ adapt_prompt() {
 # ---------------------------------------------------------------------------
 # multi-turn driver
 #
-# The skill asks in prose (principle 8), so a single `claude -p` ends at the
-# first question: Run 8's scenario 2 stopped at the Phase 1 scope confirm and
-# never reached Phase 3 at all. Exercising the later phases needs a real
-# multi-turn session - the first turn reports a session_id, and each answer is
-# a `--resume` turn against it.
+# Every turn disallows AskUserQuestion, so the skill takes its prose fallback
+# (principle 8) - the portable path a non-Claude harness would exercise, and
+# the only one that is answerable headless (the widget has hung sessions
+# started with a prompt argument on Windows). A prose ask still ends a single
+# `claude -p` at the first question: Run 8's scenario 2 stopped at the Phase 1
+# scope confirm and never reached Phase 3 at all. Exercising the later phases
+# needs a real multi-turn session - the first turn reports a session_id, and
+# each answer is a `--resume` turn against it.
 # ---------------------------------------------------------------------------
 
 SENTINEL_DONE="That's a /wrap. Go ahead and close the session."
@@ -580,6 +583,7 @@ drive_session() {
 					claude -p "$input" "${resume_args[@]+"${resume_args[@]}"}" \
 					"${MODE_ARGS[@]+"${MODE_ARGS[@]}"}" \
 					"${EXTRA_CLAUDE_ARGS[@]+"${EXTRA_CLAUDE_ARGS[@]}"}" \
+					--disallowedTools AskUserQuestion \
 					--permission-mode bypassPermissions \
 					--output-format stream-json --verbose \
 					--model "$MODEL"
@@ -668,7 +672,7 @@ generic_checks() {
 	local trace="$1"
 
 	if trace_has_tool "$trace" "AskUserQuestion"; then
-		echo "FAIL no-question-widget (skill principle 8 forbids it)"
+		echo "FAIL no-question-widget (harness disallows it; prose fallback must carry every question)"
 	else
 		echo "PASS no-question-widget"
 	fi

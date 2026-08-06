@@ -20,7 +20,7 @@ No automated runner - these are manually triggered by running `/wrap` in a sessi
 
 **Setup:** Git repo with 3 modified-but-uncommitted files and 2 commits ahead of upstream. Start a session, run `/wrap`.
 
-**Expected:** Phase 0 finds no unfinished asks and continues silently. Phase 1 picks the repo. Phase 2 handles cross-project offload. Phase 3a walks per-project memory. Phase 3c shows dirty count and unpushed count as findings. Phase 3d prompts the user for the uncommitted work with the 5-option menu.
+**Expected:** Phase 0 finds no unfinished asks and continues silently. Phase 1 picks the repo. Phase 2 handles cross-project offload. Phase 3a walks per-project memory. Phase 3c shows dirty count and unpushed count as findings. Phase 3d prompts the user for the uncommitted work with the 3-option menu (leave / commit / push).
 
 **Pass criteria:** All five phases exercised, user prompt appears in Phase 3d, Phase 4 summary shows what was committed vs left alone.
 
@@ -239,7 +239,7 @@ The harness in `tests/` automates setup and capture for every headless-capable s
 ./tests/run-audit.sh -C -o C:/audit 17 18   # control: same fixtures, no wrap at all
 ```
 
-It builds the fixture, drives the skill, and applies mechanical checks (no question widget, a closing sentinel, per-scenario safety assertions). Its green result is permission to review, **not** a pass - the judgment-heavy criteria above still need a human reading the trace. Scenarios 7 and 8 need a live interactive session and are reported as skipped.
+It builds the fixture, drives the skill, and applies mechanical checks (no question widget - the harness disallows `AskUserQuestion`, so the prose fallback is the measured surface - a closing sentinel, per-scenario safety assertions). Its green result is permission to review, **not** a pass - the judgment-heavy criteria above still need a human reading the trace. Scenarios 7 and 8 need a live interactive session and are reported as skipped.
 
 Prefer `-c` for anything measuring the skill itself: the default mode runs inside your own agent configuration, so it measures skill-plus-environment. Full isolation also needs `WRAP_AUDIT_CONFIG_DIR` and a fixture root outside `$HOME` - see `tests/README.md`.
 

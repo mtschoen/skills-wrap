@@ -2,6 +2,43 @@
 
 Pressure-test results rolled up from `docs/evidence/`. Each scenario from `docs/pressure-scenarios.md` gets a row when it has been run.
 
+## Structured-ask restoration - 2026-08-05 (interactive only; evals unchanged)
+
+The 2026-08-04 conversion is partially reversed, by user decision after living
+with the prose asks interactively: answering open-ended prose questions is more
+mentally taxing than the structured widget, whose ordered options and one-key
+answers carry real end-of-session clarity. Principle 8 is now **two-mode**:
+interactive sessions with a structured question tool use it; everywhere else
+(other harnesses, headless runs, evals) the prose protocol from the 2026-08-04
+design remains the portable baseline, unchanged.
+
+Each 2026-08-04 objection to the widget is addressed rather than dismissed:
+
+- **Option cap (2-4).** Phase 3d's menu shrank to three options - stash and
+  branch-off removed deliberately as working decisions, not closing ones - and
+  Phase 2a's memory batch keeps its numbered list in message text, with the
+  widget carrying only the batch decision (save all / save none / free-form
+  exceptions). Nothing asks for more than four slots anymore.
+- **Non-interactive auto-decline and the Windows prompt-argument hang.** Eval
+  runs now pass `--disallowedTools AskUserQuestion`, so headless sessions never
+  see the tool; the prose fallback is the measured surface, which keeps every
+  Run 8/9/9b result valid for the path evals exercise.
+- **No fallthrough default.** A dismissed/declined/erroring widget resolves to
+  the question's stated default, announced - the same discipline the prose
+  protocol already carries.
+
+The widget path itself is interactive-only and therefore not headless-testable;
+its verification is live use. The prose fallback remains the eval surface.
+
+**Verified same-day:** scenario 2 re-run in the clean room against the two-mode
+skill ($0.29, 2 turns, sonnet). The prose fallback rendered the new three-option
+menu in `l`/`c`/`p` order with per-option descriptions against real repo state
+and the stated-default sentence; no `AskUserQuestion` call appeared in the trace
+(now guaranteed by the harness's `--disallowedTools`); the harness answered `c`,
+the commit landed locally, nothing was pushed, and the completed sentinel closed
+the run. Fixture deleted after inspection; rebuildable via
+`tests/run-audit.sh -c -o <outside-home> 2`.
+
 ## Prose-ask conversion - 2026-08-04 (results below are pre-conversion)
 
 The skill no longer asks through `AskUserQuestion`. Every gate is now a plain

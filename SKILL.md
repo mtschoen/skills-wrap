@@ -34,15 +34,17 @@ The session-closing ritual for a coding agent session. Performs two equally-mand
 
 7. **Verify before delete.** Every finding surfaces with evidence, a recommendation, a confidence level, and the exact action on approval. The user approves a batch of findings at once, not item-by-item, unless explicitly described otherwise below.
 
-8. **Ask in prose, one question at a time.** Write wrap's questions in your own message text. Do **not** route them through a structured question widget (`AskUserQuestion` or a platform equivalent): its answer slots are capped below what Phases 2a and 3d need, non-interactive harnesses auto-decline it, and it has documented ways to hang a session outright - with no timeout and no fallback to a default - on several platforms. Batch *findings* into one question freely (principle 7); do not stack *questions*.
+8. **Ask through the richest channel the session offers.** In an interactive session whose harness provides a structured question tool (`AskUserQuestion` or a platform equivalent), route wrap's questions through it: ordered options with visible descriptions and one-keystroke answers beat scrollback-buried prose at the end of a long session. Shape each question to the tool's constraints - at most 4 options, the default option listed first and marked "(Recommended)", per-option descriptions written against the actual repo state. A candidate list longer than the option cap stays as a numbered list in the message text; the tool carries only the decision about the batch (see Phase 2a). If the tool call is dismissed, declined, or errors, do not retry it - take the question's stated default, announce it in one line, or re-ask that one question in prose if the answer genuinely gates destruction. Batch *findings* into one question freely (principle 7); do not stack unrelated *questions*.
 
-   **Letters name actions; numbers index items.**
+   **Prose fallback.** Everywhere else - a harness with no such tool, a non-interactive run, an eval where the tool is disallowed - write wrap's questions in your own message text, one question at a time, under the protocol below. The prose protocol is the portable baseline; the structured tool is an interactive rendering of it, and both present the same options with the same defaults.
 
-   - A fixed vocabulary of actions takes **mnemonic letters**, because the letter carries the meaning and the user learns it once: **p** push, **c** commit only, **s** stash, **l** leave as-is, **b** branch-off.
+   **Letters name actions; numbers index items** (prose rendering).
+
+   - A fixed vocabulary of actions takes **mnemonic letters**, because the letter carries the meaning and the user learns it once: **p** push, **c** commit only, **l** leave as-is.
    - A list of candidates to pick from takes **numbers** - memory items, plan files, junk directories. These are not a vocabulary, and numbers subset naturally: *"2 and 5"*, *"1-4"*, *"all"*, *"none"*.
    - Put the token **outside** the word: `**p** - push and commit`, not `(p)ush`. A letter buried inside its own label is harder to scan and turns the label into a non-word.
 
-   **Every question states its default, and the default never destroys.** Name it in the question: *"if you answer with something I can't map, I'll take **l** and say so."* The default is the most reversible option; for anything touching the user's own work, that is the option that changes nothing. This is what a question widget cannot do - a parked widget waits forever and falls through to nothing.
+   **Every question states its default, and the default never destroys.** In prose, name it in the question: *"if you answer with something I can't map, I'll take **l** and say so."* In the structured tool, the default is the first, "(Recommended)" option. Either way the default is the most reversible option; for anything touching the user's own work, that is the option that changes nothing.
 
    **At most one clarifying re-ask.** If an answer doesn't map to an option, re-ask once, naming the options again. If the second answer still doesn't map, take the stated default, say in one line which one you took and why, and continue. Never ask a third time.
 
@@ -82,7 +84,7 @@ Before scoping or sweeping anything, scan the conversation for asks the user mad
 1. **Recall the user's asks.** Walk back through the session: what did the user ask for, what got done, what didn't, what got deferred? Read background-task output (e.g. via `TaskOutput`) for any subagent results that flagged unfinished items.
 2. **Filter to the meaningful ones.** Trivial side-asks the user themselves dropped don't count. The bar is *"would the user be surprised this got dropped?"*
 3. **If nothing meaningful is unfinished:** continue silently to Phase 1. Per principle 9, no ceremony.
-4. **If unfinished items exist:** list them in one message and ask, in prose, which of three ways to proceed:
+4. **If unfinished items exist:** list them in one message and ask (through principle 8's channel) which of three ways to proceed:
    - **f** - **finish first.** Exit wrap immediately. No scope detect, no commits, nothing to undo. Return control so the user can continue the work - they can re-invoke `/wrap` once they're done.
    - **w** - **wrap with handoff** (the default). Continue normally; the unfinished-asks list becomes a seed for Phase 3a memory offload - it gets externalized as a handoff plan file or memory entry rather than being lost.
    - **d** - **wrap, drop the rest.** User decides the unfinished items aren't worth handing off. Continue normally; surface the dropped items in the Phase 4 summary so there's a record of what didn't make it.
@@ -116,7 +118,7 @@ Cross-cutting things not tied to any one project. Only done once per wrap, befor
 1. Review your conversation context (plus the on-disk session transcript, if your harness persists one, when your context has been compacted and you need to recover earlier content). Include recent output from any background shells or subagents (read via `TaskOutput` or the platform equivalent) - loose threads hiding in their output count, including output from tasks that completed during the session but whose results you never explicitly harvested.
 2. Walk the **cross-project categories** section of `references/categories.md` in order. For each category, ask yourself *"is there anything in this category from this session worth saving?"* and draft candidate items.
 3. Each draft item is a concrete: what to save, where to save it, and why.
-4. Surface the full set as one **numbered** list - one line per item saying what, where, and why. The default is **save all**: ask for exceptions, not for per-item approval. *"Save all of these? Or tell me which to drop or change - e.g. 'drop 3 and 5'."* Answers select by number; `all` and `none` both work. Do not turn the list into an item-by-item interrogation (principle 7), and do not silently shorten it because the set feels long.
+4. Surface the full set as one **numbered** list - one line per item saying what, where, and why. The default is **save all**: ask for exceptions, not for per-item approval. The numbered list always lives in the message text; a memory batch routinely outgrows any structured tool's option cap, so the tool never carries the items themselves. In the structured channel, the question carries only the batch decision - *"Save all N (Recommended)"* / *"Save none"* - and exceptions like *"drop 3 and 5"* arrive as a free-form answer. In prose: *"Save all of these? Or tell me which to drop or change - e.g. 'drop 3 and 5'."* Answers select by number; `all` and `none` both work. Do not turn the list into an item-by-item interrogation (principle 7), and do not silently shorten it because the set feels long.
 5. Execute the approved writes - create or update memory files, modify `MEMORY.md` index entries, etc.
 
 **Checklist-driven:** Walk every category even if you think it is empty. Quiet sessions should not silently skip memory offload.
@@ -211,23 +213,20 @@ The `Wrap-Session-Id:` trailer lets future tooling distinguish wrap commits from
 **User work (commit #2, prompted).** Uncommitted changes that existed *before* wrap started. After wrap's own commit lands, show `git status` + `git log @{u}..HEAD` and ask the user per repo:
 
 ```text
-**p** - push: commit the changes, then push
-**c** - commit only: commit locally, leave unpushed
-**s** - stash: set the changes aside, leave history alone
 **l** - leave as-is: change nothing (the default)
-**b** - branch off: new branch from HEAD, commit there, this branch untouched
+**c** - commit only: commit locally, leave unpushed
+**p** - push: commit the changes, then push
 ```
 
 Describe each option against the *actual* repo state - name the files and the commit count - rather than repeating the generic labels.
 
 Rules for this prompt:
 
-- **All five options must be presented**, as lettered choices in the message text with the token outside the word (principle 8). Do not drop options based on the agent's judgment of applicability - surface them and let the user decide. The user may have a use case the agent doesn't see (e.g., starting a branch off `main` for speculative follow-up work). Prose asking is what makes five options possible: a four-slot question widget cannot carry them, and past runs quietly dropped branch-off to fit.
-- **The default is `l` - change nothing.** This is the one gate where the default must be inert: everything else in wrap is wrap's own work, but this is the user's. If two answers in a row don't map to an option, take `l`, say so in one line, and move on - never fall through to a commit, a stash, or a push.
-- Never pick an option for the user *silently*. The stated default fires only after one clarifying re-ask (principle 8), and firing it is always announced.
+- **Exactly these three options**, through principle 8's channel: structured-tool options with leave-as-is first and "(Recommended)", or lettered prose choices with the token outside the word. Do not drop one as inapplicable, and do not add more. Stash and branch-off were removed deliberately (2026-08-05): parking or forking uncommitted work is a *working* decision, not a *closing* one - a user who wants either can say so in a free-form answer, and the agent honors it.
+- **The default is `l` - change nothing.** This is the one gate where the default must be inert: everything else in wrap is wrap's own work, but this is the user's. If two answers in a row don't map to an option, take `l`, say so in one line, and move on - never fall through to a commit or a push.
+- Never pick an option for the user *silently*. The stated default fires only after one clarifying re-ask or a dismissed structured question (principle 8), and firing it is always announced.
 - Never push without the explicit `p` choice.
 - Never force-push. If the push is rejected as non-fast-forward, report "push rejected, commits stay local" and continue.
-- `b` creates a new branch from current HEAD, commits there, leaves `main`/the original branch untouched.
 - If there is no upstream, `p` degrades to `c` for that repo; inform the user in the option's description rather than omitting it.
 
 ### Phase 4 - Session summary
