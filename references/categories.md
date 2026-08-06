@@ -6,6 +6,8 @@ The checklist the agent walks during Phase 2 (session-wide offload) and Phase 3a
 
 These are handled once per wrap invocation, not per repo.
 
+The destination paths below use Claude Code's per-project memory layout (`~/.claude/projects/<project-slug>/memory/`) as the worked example - it is the common case, and spelling it out saves the agent a lookup. On another harness, substitute its equivalent durable memory store (or the project's own notes convention); the filename prefixes and frontmatter shapes travel as-is.
+
 ### User preferences discovered
 
 New gotchas, likes, dislikes, or working styles the user expressed during the session.
